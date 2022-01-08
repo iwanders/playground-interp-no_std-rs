@@ -5,6 +5,9 @@ TEST_BINARY=target/debug/test
 .PHONY: symbols
 symbols:
 	readelf -s $(TEST_BINARY)
+.PHONY: ldd
+ldd:
+	ldd $(TEST_BINARY)
 
 interp:
 	objdump -s -j .interp $(TEST_BINARY)
