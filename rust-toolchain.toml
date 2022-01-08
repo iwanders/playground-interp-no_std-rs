@@ -1,0 +1,6 @@
+
+# Need feature(asm)
+# use of unstable library feature 'asm': inline assembly is not stable enough for use and is subject to change
+[toolchain]
+channel = "nightly"
+
