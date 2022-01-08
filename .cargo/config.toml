@@ -1,0 +1,6 @@
+[build]
+rustflags = "-C link-arg=-nostartfiles"        # custom flags to pass to all compiler invocations
+
+
+#[target.x86_64-unknown-linux-gnu]
+#rustflags = "-C link-arg=-nostartfiles"  # custom flags for `rustc`
