@@ -23,10 +23,12 @@ pub unsafe extern "C" fn memset(ptr: *mut u8, fill: i32, size: usize) -> *mut u8
 pub unsafe extern "C" fn memcmp(s1: *const u8, s2: *const u8, size: usize) -> i32 {
     let mut i = 0;
     while i < size {
-
-        if *s1.offset(i as isize) != *s2.offset(i as isize)
-        {
-            return if (*s1.offset(i as isize) < *s2.offset(i as isize)) { -1 } else { 1 };
+        if *s1.offset(i as isize) != *s2.offset(i as isize) {
+            return if *s1.offset(i as isize) < *s2.offset(i as isize) {
+                -1
+            } else {
+                1
+            };
         }
         i += 1;
     }

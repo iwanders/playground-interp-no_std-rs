@@ -21,20 +21,15 @@ pub extern "C" fn _start() -> ! {
 
     for i in 0..10 {
         // println!("Lorem {} ipsum {:?} dolor {} ", 5, Some(i), "foo");
-        println!(
-            "Lorem {} ipsum {:?} dolor {:?}sdifjdsifjdslkfjlksdjflksdjflkdsjlkf ",
-            5,
-            Some(i),
-            Some(3.3)
-        );
-        // println!("Lorem {} ipsum {:?} dolor {}sdifjdsifjdslkfjlksdjflksdjflkdsjlkf ", 5, Some(3.3), "foo");
+        println!("Lorem {} ipsum {:?} dolor {:?} ", 5, Some(i), Some(3.3));
+        // println!("Lorem {} ipsum {:?} dolor {} ", 5, Some(3.3), "foo");
     }
 
     // stackallocate();
 
-    exit(33);
+    // exit(0);
 
-    for _i in 0..100000 {
+    for _i in 0..1 {
         print(".");
     }
     // lets do some stack exhaustion and see where it fails...
@@ -45,9 +40,9 @@ pub extern "C" fn _start() -> ! {
     // Unless that... grows from the other side or something?
 
     print("z");
-    print("x");
+    print("x\n");
 
-    exit(33);
+    exit(0);
     loop {}
 }
 

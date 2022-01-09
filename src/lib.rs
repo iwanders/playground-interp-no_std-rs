@@ -1,8 +1,8 @@
 #![no_std]
 // here we go :o
-#![feature(asm)]
-mod syscall;
+
 mod support;
+mod syscall;
 pub use crate::syscall::{exit, write};
 
 pub fn print(input: &str) {
@@ -12,13 +12,13 @@ pub fn print(input: &str) {
     }
 }
 
-const StackStringSize: usize = 4096;
+const STACK_STRING_SIZE: usize = 4096;
 pub struct StackString {
-    pub buffer: [u8; StackStringSize],
+    pub buffer: [u8; STACK_STRING_SIZE],
     pub size: usize,
 }
 impl StackString {
-    const StackStringSize: usize = StackStringSize;
+    pub const STACK_STRING_SIZE: usize = STACK_STRING_SIZE;
     fn as_ptr(&self) -> *const char {
         self.buffer.as_ptr() as *const char
     }
@@ -30,7 +30,7 @@ impl StackString {
 impl Default for StackString {
     fn default() -> Self {
         StackString {
-            buffer: [0; StackStringSize],
+            buffer: [0; Self::STACK_STRING_SIZE],
             size: 0,
         }
     }
