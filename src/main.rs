@@ -172,7 +172,6 @@ impl Default for StackString
     {
         StackString{buffer: [0; 50], size: 0}
     }
-
 }
 
 
@@ -204,18 +203,18 @@ impl fmt::Write for StackString
 pub unsafe fn memcpy(dest: *mut char, src: *const char, size: usize) {
     for i in 0..size
     {
-        (*dest.offset(i as isize)) = *src.offset(i as isize);
+        // *dest.offset(i as isize) = *src.offset(i as isize);
     }
 }
 #[no_mangle]
 pub unsafe fn memset(ptr: *mut char, fill: char, size: usize) {
     for i in 0..size
     {
-        print(".");
-        (*ptr.offset(i as isize)) = fill;
+        // print(".");
+        // (*ptr.offset(i as isize)) = fill;
     }
 }
-// for some reason... some 
+// for some reason, providing a body to these functions segfaults.
 
 // #[no_mangle]
 // pub unsafe fn malloc(size: usize) {
@@ -223,20 +222,30 @@ pub unsafe fn memset(ptr: *mut char, fill: char, size: usize) {
 // }
 
 use core::fmt;
-fn println(input: &str) {
-    // let with_newline = input;
-    {
+fn print_sstr(input: &StackString) {
+    unsafe {
+        let f = input.as_ptr() as *const char;
+        let l = input.len() as u64;
+        write(1, f, l);
+    }
+}
+
+use core::fmt::Write;
+// Adopted from https://doc.rust-lang.org/src/std/macros.rs.html#94-99
+macro_rules! println {
+    () => (print("\n"));
+    ($($arg:tt)*) => ({
         let mut v: StackString = StackString{buffer: [0; 50], size: 0};
         // let mut v: StackString = Default::default();
-        fmt::write(&mut v, format_args!("{}", input))
-            .expect("Error occurred while trying to write in String");
-        unsafe {
-            let f = v.as_ptr() as *const char;
-            let l = v.len() as u64;
-            write(1, f, l);
-        }
-    }
-    print("a");
+        fmt::write(&mut v, format_args!($($arg)*)).expect("Error occurred while trying to write in String");
+        v.write_str("\n");
+        print_sstr(&v);
+    })
+}
+
+fn stackallocate()
+{
+    let mut v: StackString = StackString{buffer: [0; 50], size: 0};
 }
 
 fn recurser(z: usize)
@@ -249,14 +258,27 @@ fn recurser(z: usize)
     recurser(z+1);
 }
 
+
+
+
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     // write();
     print("hello");
+    // printauxv();
     printb("b");
     // print("hello");
-    println("1");
+    println!("{} haha", 1);
+    println!("Lorem {} ipsum {:?} dolor {} ", 5, Some(3), "foo");
 
+    stackallocate();
+
+    exit(33);
+
+    for i in 0..100000
+    {
+        print(".");
+    }
     // lets do some stack exhaustion and see where it fails...
     // recurser(0);
     // x0000555555554505 in test::recurser (z=262007) at src/main.rs:218

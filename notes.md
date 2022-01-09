@@ -43,3 +43,6 @@ Then, the question remains why does my string allocation / memset segfault?
 // Oh, maybe my syscall eliminates the stack return address for when we jump out of println?
 
 Marking everything as clobbered doesn't seem to do anything, neither does saving / restoring rsp.
+
+
+Ok... disabled memcpy and memset for now... doing a float formatting segfaults, small strings seem to work?
