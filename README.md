@@ -22,6 +22,8 @@ Do not use this for anything, it's probably riddled with bugs.
 
 
 ## Notes
+
+### On rebuilding the core librayr
 The `core` library _must_ be rebuilt, I'm not certain why, but if we don't and we format a 
 floating point number we get a segfault from somewhere in the float formatter;
 ```
@@ -47,3 +49,12 @@ cargo b -Z build-std=core --target x86_64-unknown-linux-gnu
 
 The Makefile provides convenience helpers for this that allow using `make r` to run the above command.
 
+### Who not just use `x86_64-unknown-linux-musl`?
+
+This resulted in
+```
+fatal runtime error: assertion failed: thread_info.is_none()
+Aborted
+```
+When using it as an interp target, besides, I wanted to explore what goes into a user space program
+writing characters to stdout.
