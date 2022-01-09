@@ -12,12 +12,13 @@ pub fn print(input: &str) {
     }
 }
 
-// use core::fmt;
+const StackStringSize: usize = 4096;
 pub struct StackString {
-    pub buffer: [u8; 5000],
+    pub buffer: [u8; StackStringSize],
     pub size: usize,
 }
 impl StackString {
+    const StackStringSize: usize = StackStringSize;
     fn as_ptr(&self) -> *const char {
         self.buffer.as_ptr() as *const char
     }
@@ -29,7 +30,7 @@ impl StackString {
 impl Default for StackString {
     fn default() -> Self {
         StackString {
-            buffer: [0; 5000],
+            buffer: [0; StackStringSize],
             size: 0,
         }
     }
@@ -67,17 +68,10 @@ pub use core::fmt;
 macro_rules! println {
     () => (print("\n"));
     ($($arg:tt)*) => ({
-        let mut v: StackString = StackString{buffer: [0; 5000], size: 0};
+        let mut v: StackString = Default::default();
         // let mut v: StackString = Default::default();
         fmt::write(&mut v, format_args!($($arg)*)).expect("Error occurred while trying to write in String");
         v.write_str("\n").expect("Shouldn't fail");
         print_sstr(&v);
     })
-}
-
-pub fn stackallocate() {
-    let mut _v: StackString = StackString {
-        buffer: [0; 5000],
-        size: 0,
-    };
 }
