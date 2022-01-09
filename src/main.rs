@@ -127,7 +127,7 @@ fn print(input: &str) {
 // use core::fmt;
 struct StackString
 {
-    buffer: [u8; 5],
+    buffer: [u8; 50],
     size: usize,
 }
 impl StackString
@@ -146,7 +146,7 @@ impl Default for StackString
 {
     fn default() -> Self
     {
-        StackString{buffer: [0; 5], size: 0}
+        StackString{buffer: [0; 50], size: 0}
     }
 
 }
@@ -201,15 +201,28 @@ pub unsafe fn memset(ptr: *mut char, fill: char, size: usize) {
 use core::fmt;
 fn println(input: &str) {
     // let with_newline = input;
-    // let mut v: StackString = StackString{buffer: ['\x00'; 50], size: 0};
-    let mut v: StackString = Default::default();
-    fmt::write(&mut v, format_args!("{}", input))
-        .expect("Error occurred while trying to write in String");
-    unsafe {
-        let f = v.as_ptr() as *const char;
-        let l = v.len() as u64;
-        write(1, f, l);
+    {
+        let mut v: StackString = StackString{buffer: [0; 50], size: 0};
+        // let mut v: StackString = Default::default();
+        fmt::write(&mut v, format_args!("{}", input))
+            .expect("Error occurred while trying to write in String");
+        unsafe {
+            let f = v.as_ptr() as *const char;
+            let l = v.len() as u64;
+            write(1, f, l);
+        }
     }
+    print("z");
+}
+
+fn recurser(z: usize)
+{
+    let dummy: u32 = 0;
+    if (z == 100000)
+    {
+        print("yes");
+    }
+    recurser(z+1);
 }
 
 #[no_mangle]
@@ -217,7 +230,17 @@ pub extern "C" fn _start() -> ! {
     // write();
     print("hello");
     // print("hello");
-    println("ff");
+    println("1");
+
+    // lets do some stack exhaustion and see where it fails...
+    // recurser(0);
+    // x0000555555554505 in test::recurser (z=262007) at src/main.rs:218
+    // 1048028 bytes... that's not too bad... sounds like my stack string should also work??
+
+    // Unless that... grows from the other side or something?
+
+    print("z");
+
     exit(33);
     loop {}
 }
