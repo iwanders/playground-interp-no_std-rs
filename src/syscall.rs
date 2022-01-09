@@ -51,8 +51,8 @@ pub fn exit(return_code: i32) {
         // Replaced with the syscall instruction
         const SYSCALL_ID: u32 = 60;
         asm!("syscall", in("rax") SYSCALL_ID, in("rdi") return_code,
-            lateout("rax") _,
-            lateout("rdi") _,
+            lateout("rcx") _,
+            lateout("r11") _,
         );
     }
 }
@@ -62,12 +62,6 @@ pub unsafe fn write(fd: u64, buffer: *const char, length: u64) {
     // Guess it's here; https://github.com/torvalds/linux/blob/v4.15/fs/read_write.c#L581-L596
     // So... some uint32 fd, const char* __user_string, size_t count.
 
-    // Probably don't need the string terminator... but probably good practice?
-    // let z = "booo\n";
-    // let size: u64 = z.len() as u64;
-    // const FD: u64 = 1;
-
-    // let z = format!("{}", 3);
     const SYSCALL_ID: u32 = 1; // write, in 64 bit syscall.
 
     // So, presumably, this string is passed in as a pointer, that's my hunch at least.
@@ -97,30 +91,12 @@ pub unsafe fn write(fd: u64, buffer: *const char, length: u64) {
      * r8   arg4
      * r9   arg5
      */
-    // asm!("mov rsp, {z}", z = in(reg) rsp);
-
-    // asm!("mov {z}, rsp", z = out(reg) rsp);
-
     asm!("syscall",
         in("rax") SYSCALL_ID,
         in("rdi") fd,
         in("rsi") buffer,
         in("rdx") length,
-        // lateout("rcx") _,
-        // lateout("r11") _,
-        // lateout("rax") _,
-        // lateout("rdi") _,
-        lateout("rax") _,
         lateout("rcx") _,
-        lateout("rdi") _,
-        lateout("rsi") _,
-        lateout("rdx") _,
-        lateout("r10") _,
-        lateout("r8") _,
-        lateout("r9") _,
         lateout("r11") _,
     );
-
-    // asm!("mov rsp, {z}", z = in(reg) rsp);
-    // https://doc.rust-lang.org/beta/unstable-book/library-features/asm.html
 }
