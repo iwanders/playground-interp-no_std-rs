@@ -2,6 +2,15 @@
 TEST_BINARY=target/debug/syscall_test
 
 
+run:
+	cargo run -Z build-std=core --target x86_64-unknown-linux-gnu
+.PHONY: run
+
+build:
+	cargo build -Z build-std=core --target x86_64-unknown-linux-gnu
+.PHONY: build
+
+
 .PHONY: symbols
 symbols:
 	readelf -s $(TEST_BINARY)

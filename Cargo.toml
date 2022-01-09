@@ -8,3 +8,4 @@ authors = ["Ivor Wanders <ivor@iwanders.net>"]
 panic = "abort"
 [profile.release]
 panic = "abort"
+
