@@ -5,6 +5,8 @@
 // here we go :o
 #![feature(asm)]
 
+use core::arch;
+// use core::arch::asm; // in latest nightly.
 
 // Well, using alloc is a whole rabbit hole as we don't have malloc. No heap for now...
 // #![feature(default_alloc_error_handler)]
@@ -200,19 +202,24 @@ impl fmt::Write for StackString
 // We can definitely provide those to make the linker happy, they don't require allocations.
 
 #[no_mangle]
-pub unsafe fn memcpy(dest: *mut char, src: *const char, size: usize) -> *mut char {
-    for i in 0..size
+pub unsafe extern "C" fn memcpy(dest: *mut u8, src: *const u8, size: usize) -> *mut u8 {
+    let mut i = 0;
+    // for i in 0..size
+    while i < size
     {
-        // *dest.offset(i as isize) = *src.offset(i as isize);
+        *dest.offset(i as isize) = *src.offset(i as isize);
+        i += 1;
     }
     dest
 }
 #[no_mangle]
-pub unsafe fn memset(ptr: *mut char, fill: char, size: usize) -> *mut char{
-    for i in 0..size
+pub unsafe extern "C" fn memset(ptr: *mut u8, fill: i32, size: usize) -> *mut u8{
+    let mut i = 0;
+    while i < size
     {
         // print(".");
-        (*ptr.offset(i as isize)) = fill;
+        (*ptr.offset(i as isize)) = fill as u8;
+        i += 1;
     }
     ptr
 }
@@ -266,11 +273,11 @@ fn recurser(z: usize)
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     // write();
-    print("hello");
-    // printauxv();
-    printb("b");
     // print("hello");
-    println!("{} haha", 1);
+    // printauxv();
+    // printb("b");
+    // print("hello");
+    // println!("{} haha", 1);
 
     // for i in 0..100
     // {
