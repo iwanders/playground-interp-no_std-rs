@@ -17,3 +17,9 @@ interp:
 readelf_all:
 	readelf -a $(TEST_BINARY)
 .PHONY: readelf_all
+
+
+# If we strip interp, we can't start anymore... probably missing some magic I don't understand yet.
+remove_interp:
+	objcopy --remove-section .interp $(TEST_BINARY)
+.PHONY: remove_interp

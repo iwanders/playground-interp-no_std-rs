@@ -1,4 +1,3 @@
-
 // https://github.com/torvalds/linux/blob/v4.15/arch/x86/include/asm/syscall.h
 
 // use core::arch;
@@ -122,8 +121,6 @@ pub unsafe fn write(fd: u64, buffer: *const char, length: u64) {
         lateout("r11") _,
     );
 
-
     // asm!("mov rsp, {z}", z = in(reg) rsp);
     // https://doc.rust-lang.org/beta/unstable-book/library-features/asm.html
 }
-

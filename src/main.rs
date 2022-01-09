@@ -6,9 +6,9 @@
 
 // use syscall_test;
 extern crate syscall_test;
-use ::syscall_test::{exit, print};
+use syscall_test::{exit, print};
 
-use ::syscall_test::{println, fmt, StackString, print_sstr, fmt::Write};
+use syscall_test::{fmt, fmt::Write, print_sstr, println, StackString};
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
@@ -19,10 +19,14 @@ pub extern "C" fn _start() -> ! {
     // print("hello");
     // println!("{} haha", 1);
 
-    for i in 0..10
-    {
+    for i in 0..10 {
         // println!("Lorem {} ipsum {:?} dolor {} ", 5, Some(i), "foo");
-        println!("Lorem {} ipsum {:?} dolor {}sdifjdsifjdslkfjlksdjflksdjflkdsjlkf ", 5, Some(i), "foo");
+        println!(
+            "Lorem {} ipsum {:?} dolor {}sdifjdsifjdslkfjlksdjflksdjflkdsjlkf ",
+            5,
+            Some(i),
+            "foo"
+        );
         // println!("Lorem {} ipsum {:?} dolor {}sdifjdsifjdslkfjlksdjflksdjflkdsjlkf ", 5, Some(3.3), "foo");
     }
 
@@ -30,8 +34,7 @@ pub extern "C" fn _start() -> ! {
 
     exit(33);
 
-    for _i in 0..100000
-    {
+    for _i in 0..100000 {
         print(".");
     }
     // lets do some stack exhaustion and see where it fails...
@@ -53,5 +56,5 @@ use core::panic::PanicInfo;
 pub fn panic(_info: &PanicInfo) -> ! {
     print("\nPanic!");
     exit(99);
-    loop{};
+    loop {}
 }
