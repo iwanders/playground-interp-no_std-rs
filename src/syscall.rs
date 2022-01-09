@@ -1,7 +1,7 @@
 // https://github.com/torvalds/linux/blob/v4.15/arch/x86/include/asm/syscall.h
 
 // use core::arch;
-// use core::arch::asm; // in latest nightly.
+use core::arch::asm; // in latest nightly.
 
 // Well, using alloc is a whole rabbit hole as we don't have malloc. No heap for now...
 // #![feature(default_alloc_error_handler)]

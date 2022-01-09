@@ -73,3 +73,10 @@ Formatting floats still bails, but that's hardly a problem for now:
 ==5142==    by 0x11043E: core::fmt::write (mod.rs:1094)
 ==5142==    by 0x10B2D6: _start (main.rs:286)
 ```
+
+Crash in grisu disappears when we do;
+```
+cargo b -Z build-std=core --target x86_64-unknown-linux-gnu
+```
+
+We do have to provide memcmp in latest nightly.

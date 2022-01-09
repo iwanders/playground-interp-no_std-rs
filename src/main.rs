@@ -22,10 +22,10 @@ pub extern "C" fn _start() -> ! {
     for i in 0..10 {
         // println!("Lorem {} ipsum {:?} dolor {} ", 5, Some(i), "foo");
         println!(
-            "Lorem {} ipsum {:?} dolor {}sdifjdsifjdslkfjlksdjflksdjflkdsjlkf ",
+            "Lorem {} ipsum {:?} dolor {:?}sdifjdsifjdslkfjlksdjflksdjflkdsjlkf ",
             5,
             Some(i),
-            "foo"
+            Some(3.3)
         );
         // println!("Lorem {} ipsum {:?} dolor {}sdifjdsifjdslkfjlksdjflksdjflkdsjlkf ", 5, Some(3.3), "foo");
     }

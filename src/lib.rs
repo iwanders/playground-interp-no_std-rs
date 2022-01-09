@@ -72,6 +72,20 @@ pub unsafe extern "C" fn memset(ptr: *mut u8, fill: i32, size: usize) -> *mut u8
     ptr
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn memcmp(s1: *const u8, s2: *const u8, size: usize) -> i32 {
+    let mut i = 0;
+    while i < size {
+
+        if *s1.offset(i as isize) != *s2.offset(i as isize)
+        {
+            return 1; // something about the sign...
+        }
+        i += 1;
+    }
+    0
+}
+
 // use core::fmt;
 pub fn print_sstr(input: &StackString) {
     unsafe {
