@@ -2,6 +2,7 @@
 name = "syscall_test"
 version = "0.0.0"
 authors = ["Ivor Wanders <ivor@iwanders.net>"]
+license = "MIT OR Apache-2.0"
 
 # Disables error handling, prevents eh_personality requirement.
 [profile.dev]
