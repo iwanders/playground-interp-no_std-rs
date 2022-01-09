@@ -46,3 +46,7 @@ Marking everything as clobbered doesn't seem to do anything, neither does saving
 
 
 Ok... disabled memcpy and memset for now... doing a float formatting segfaults, small strings seem to work?
+
+
+--
+Aha, valgrind says we do jump to address 0, and then segfault.

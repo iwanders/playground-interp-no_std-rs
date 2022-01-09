@@ -200,19 +200,21 @@ impl fmt::Write for StackString
 // We can definitely provide those to make the linker happy, they don't require allocations.
 
 #[no_mangle]
-pub unsafe fn memcpy(dest: *mut char, src: *const char, size: usize) {
+pub unsafe fn memcpy(dest: *mut char, src: *const char, size: usize) -> *mut char {
     for i in 0..size
     {
         // *dest.offset(i as isize) = *src.offset(i as isize);
     }
+    dest
 }
 #[no_mangle]
-pub unsafe fn memset(ptr: *mut char, fill: char, size: usize) {
+pub unsafe fn memset(ptr: *mut char, fill: char, size: usize) -> *mut char{
     for i in 0..size
     {
         // print(".");
-        // (*ptr.offset(i as isize)) = fill;
+        (*ptr.offset(i as isize)) = fill;
     }
+    ptr
 }
 // for some reason, providing a body to these functions segfaults.
 
@@ -269,7 +271,11 @@ pub extern "C" fn _start() -> ! {
     printb("b");
     // print("hello");
     println!("{} haha", 1);
-    println!("Lorem {} ipsum {:?} dolor {} ", 5, Some(3), "foo");
+
+    // for i in 0..100
+    // {
+        // println!("Lorem {} ipsum {:?} dolor {} ", 5, Some(i), "foo");
+    // }
 
     stackallocate();
 
