@@ -45,6 +45,7 @@ pub fn exit(return_code: i32) {
         // set the return code in ebx
         // trigger interrupt and hope for the best
 
+        // With the legacy int 0x80 instruction;
         // let exit_syscall_id: u32 = 1;
         // asm!("int $$0x80", in("eax") exit_syscall_id, in("ebx") return_code);
 

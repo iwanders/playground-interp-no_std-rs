@@ -1,5 +1,9 @@
 // Well, format just assumes that memset and memcpy exist.
 // We can definitely provide those to make the linker happy, they don't require allocations.
+
+// They're written without `for i in 0..size` to avoid creating an iterator object, at some point
+// I was actually stepping through these functions to figure out a segfault.
+
 #[no_mangle]
 pub unsafe extern "C" fn memcpy(dest: *mut u8, src: *const u8, size: usize) -> *mut u8 {
     let mut i = 0;

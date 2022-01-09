@@ -5,6 +5,7 @@ mod support;
 mod syscall;
 pub use crate::syscall::{exit, write};
 
+/// Safe function to write a string to stdout.
 pub fn print(input: &str) {
     unsafe {
         let f = input.as_ptr() as *const char;
@@ -12,7 +13,10 @@ pub fn print(input: &str) {
     }
 }
 
+
 const STACK_STRING_SIZE: usize = 4096;
+
+/// Object to be able to write a string that's stored onto the stack.
 pub struct StackString {
     pub buffer: [u8; STACK_STRING_SIZE],
     pub size: usize,
@@ -38,6 +42,7 @@ impl Default for StackString {
 
 use core::cmp::min;
 use core::fmt::Error;
+// Implement the write trait for the stackstring.
 impl fmt::Write for StackString {
     fn write_str(&mut self, s: &str) -> Result<(), Error> {
         for i in 0..min(s.len(), self.buffer.len() - self.size) {

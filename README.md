@@ -23,7 +23,7 @@ Do not use this for anything, it's probably riddled with bugs.
 
 ## Notes
 
-### On rebuilding the core librayr
+### On rebuilding the core library
 The `core` library _must_ be rebuilt, I'm not certain why, but if we don't and we format a 
 floating point number we get a segfault from somewhere in the float formatter;
 ```
