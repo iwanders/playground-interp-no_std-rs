@@ -153,7 +153,7 @@ fn printb(input: &str) {
 // use core::fmt;
 struct StackString
 {
-    buffer: [u8; 50],
+    buffer: [u8; 5000],
     size: usize,
 }
 impl StackString
@@ -172,7 +172,7 @@ impl Default for StackString
 {
     fn default() -> Self
     {
-        StackString{buffer: [0; 50], size: 0}
+        StackString{buffer: [0; 5000], size: 0}
     }
 }
 
@@ -244,7 +244,7 @@ use core::fmt::Write;
 macro_rules! println {
     () => (print("\n"));
     ($($arg:tt)*) => ({
-        let mut v: StackString = StackString{buffer: [0; 50], size: 0};
+        let mut v: StackString = StackString{buffer: [0; 5000], size: 0};
         // let mut v: StackString = Default::default();
         fmt::write(&mut v, format_args!($($arg)*)).expect("Error occurred while trying to write in String");
         v.write_str("\n");
@@ -254,7 +254,7 @@ macro_rules! println {
 
 fn stackallocate()
 {
-    let mut v: StackString = StackString{buffer: [0; 50], size: 0};
+    let mut v: StackString = StackString{buffer: [0; 5000], size: 0};
 }
 
 fn recurser(z: usize)
@@ -279,12 +279,14 @@ pub extern "C" fn _start() -> ! {
     // print("hello");
     // println!("{} haha", 1);
 
-    // for i in 0..100
-    // {
+    for i in 0..100
+    {
         // println!("Lorem {} ipsum {:?} dolor {} ", 5, Some(i), "foo");
-    // }
+        // println!("Lorem {} ipsum {:?} dolor {}sdifjdsifjdslkfjlksdjflksdjflkdsjlkf ", 5, Some(i), "foo");
+        println!("Lorem {} ipsum {:?} dolor {}sdifjdsifjdslkfjlksdjflksdjflkdsjlkf ", 5, Some(3.3), "foo");
+    }
 
-    stackallocate();
+    // stackallocate();
 
     exit(33);
 

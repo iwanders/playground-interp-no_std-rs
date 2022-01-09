@@ -50,3 +50,26 @@ Ok... disabled memcpy and memset for now... doing a float formatting segfaults, 
 
 --
 Aha, valgrind says we do jump to address 0, and then segfault.
+
+Ah, memset takes fill as i32, not u8... that was that difference in signature caused the jump to 0x00.
+
+--
+Formatting floats still bails, but that's hardly a problem for now:
+
+        println!("Lorem {} ipsum {:?} dolor {}sdifjdsifjdslkfjlksdjflksdjflkdsjlkf ", 5, Some(3.3), "foo");
+
+```
+=5142== Process terminating with default action of signal 11 (SIGSEGV)
+==5142==  General Protection Fault
+==5142==    at 0x10FDAC: format_shortest (grisu.rs:467)
+==5142==    by 0x10FDAC: call_mut<fn(&core::num::flt2dec::decoder::Decoded, &mut [core::mem::maybe_uninit::MaybeUninit<u8>]) -> (&[u8], i16),(&core::num::flt2dec::decoder::Decoded, &mut [core::mem::maybe_uninit::MaybeUninit<u8>])> (function.rs:150)
+==5142==    by 0x10FDAC: to_shortest_str<f64,fn(&core::num::flt2dec::decoder::Decoded, &mut [core::mem::maybe_uninit::MaybeUninit<u8>]) -> (&[u8], i16)> (mod.rs:497)
+==5142==    by 0x10FDAC: core::fmt::float::float_to_decimal_common_shortest (float.rs:45)
+==5142==    by 0x10A836: <&T as core::fmt::Debug>::fmt (mod.rs:2012)
+==5142==    by 0x10F5DE: {{closure}} (builders.rs:344)
+==5142==    by 0x10F5DE: and_then<(),core::fmt::Error,(),closure-0> (result.rs:704)
+==5142==    by 0x10F5DE: core::fmt::builders::DebugTuple::field (builders.rs:331)
+==5142==    by 0x10A763: <core::option::Option<T> as core::fmt::Debug>::fmt (option.rs:158)
+==5142==    by 0x11043E: core::fmt::write (mod.rs:1094)
+==5142==    by 0x10B2D6: _start (main.rs:286)
+```
