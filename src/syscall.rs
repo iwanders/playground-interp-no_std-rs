@@ -1,7 +1,7 @@
 
 // https://github.com/torvalds/linux/blob/v4.15/arch/x86/include/asm/syscall.h
 
-use core::arch;
+// use core::arch;
 // use core::arch::asm; // in latest nightly.
 
 // Well, using alloc is a whole rabbit hole as we don't have malloc. No heap for now...
@@ -98,31 +98,30 @@ pub unsafe fn write(fd: u64, buffer: *const char, length: u64) {
      * r8   arg4
      * r9   arg5
      */
-    let mut rsp: u64 = 0;
     // asm!("mov rsp, {z}", z = in(reg) rsp);
-    unsafe {
-        // asm!("mov {z}, rsp", z = out(reg) rsp);
 
-        asm!("syscall",
-            in("rax") SYSCALL_ID,
-            in("rdi") fd,
-            in("rsi") buffer,
-            in("rdx") length,
-            // lateout("rcx") _,
-            // lateout("r11") _,
-            // lateout("rax") _,
-            // lateout("rdi") _,
-            lateout("rax") _,
-            lateout("rcx") _,
-            lateout("rdi") _,
-            lateout("rsi") _,
-            lateout("rdx") _,
-            lateout("r10") _,
-            lateout("r8") _,
-            lateout("r9") _,
-            lateout("r11") _,
-        );
-    }
+    // asm!("mov {z}, rsp", z = out(reg) rsp);
+
+    asm!("syscall",
+        in("rax") SYSCALL_ID,
+        in("rdi") fd,
+        in("rsi") buffer,
+        in("rdx") length,
+        // lateout("rcx") _,
+        // lateout("r11") _,
+        // lateout("rax") _,
+        // lateout("rdi") _,
+        lateout("rax") _,
+        lateout("rcx") _,
+        lateout("rdi") _,
+        lateout("rsi") _,
+        lateout("rdx") _,
+        lateout("r10") _,
+        lateout("r8") _,
+        lateout("r9") _,
+        lateout("r11") _,
+    );
+
 
     // asm!("mov rsp, {z}", z = in(reg) rsp);
     // https://doc.rust-lang.org/beta/unstable-book/library-features/asm.html
