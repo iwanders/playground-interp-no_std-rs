@@ -1,5 +1,5 @@
 [package]
-name = "test"
+name = "syscall_test"
 version = "0.0.0"
 authors = ["Ivor Wanders <ivor@iwanders.net>"]
 

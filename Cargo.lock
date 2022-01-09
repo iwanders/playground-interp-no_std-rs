@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "test"
+name = "syscall_test"
 version = "0.0.0"

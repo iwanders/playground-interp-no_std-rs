@@ -1,5 +1,5 @@
 
-TEST_BINARY=target/debug/test
+TEST_BINARY=target/debug/syscall_test
 
 
 .PHONY: symbols
