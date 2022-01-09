@@ -100,25 +100,49 @@ unsafe fn write(fd: u64, buffer: *const char, length: u64) {
      * r8   arg4
      * r9   arg5
      */
+    let mut rsp: u64 = 0;
+    // asm!("mov rsp, {z}", z = in(reg) rsp);
     unsafe {
-        // let f = z.as_ptr() as *const char;
+        // asm!("mov {z}, rsp", z = out(reg) rsp);
+
         asm!("syscall",
             in("rax") SYSCALL_ID,
             in("rdi") fd,
             in("rsi") buffer,
             in("rdx") length,
-            lateout("rcx") _,
-            lateout("r11") _,
+            // lateout("rcx") _,
+            // lateout("r11") _,
+            // lateout("rax") _,
+            // lateout("rdi") _,
             lateout("rax") _,
+            lateout("rcx") _,
             lateout("rdi") _,
+            lateout("rsi") _,
+            lateout("rdx") _,
+            lateout("r10") _,
+            lateout("r8") _,
+            lateout("r9") _,
+            lateout("r11") _,
         );
     }
+
+    // asm!("mov rsp, {z}", z = in(reg) rsp);
+    // https://doc.rust-lang.org/beta/unstable-book/library-features/asm.html
 }
 
 fn print(input: &str) {
     unsafe {
         let f = input.as_ptr() as *const char;
         write(1, f, input.len() as u64);
+    }
+}
+
+
+fn printb(input: &str) {
+    let b: u64 = 0;
+    unsafe {
+        let f = input.as_ptr() as *const char;
+        write(1, f, b + input.len() as u64);
     }
 }
 
@@ -212,7 +236,7 @@ fn println(input: &str) {
             write(1, f, l);
         }
     }
-    print("z");
+    print("a");
 }
 
 fn recurser(z: usize)
@@ -229,6 +253,7 @@ fn recurser(z: usize)
 pub extern "C" fn _start() -> ! {
     // write();
     print("hello");
+    printb("b");
     // print("hello");
     println("1");
 
@@ -240,6 +265,7 @@ pub extern "C" fn _start() -> ! {
     // Unless that... grows from the other side or something?
 
     print("z");
+    print("x");
 
     exit(33);
     loop {}

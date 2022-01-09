@@ -41,3 +41,5 @@ So, from the looks of it... our stack is 0x21000, which is 135168 bytes
 Then, the question remains why does my string allocation / memset segfault?
 
 // Oh, maybe my syscall eliminates the stack return address for when we jump out of println?
+
+Marking everything as clobbered doesn't seem to do anything, neither does saving / restoring rsp.
