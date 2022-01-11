@@ -1,29 +1,4 @@
-# Playground interp no_std
-
-Odd but descriptive repo name. This repo isn't intended to _really_ do anything, it is just me
-playing around trying to make a completely stand-alone binary in Rust. Without relying on libc, the
-dynamic linker and basically all other conveniences we take for granted normally. So manually
-implementing the interaction between userspace and the kernel to print to stdout.
-
-My stretch goal was making something that can actually act as an `.interp` target for a dynamically
-linked binary, which does work, the built target from `make build` can be used as a substitute for
-`/lib64/ld-linux-x86-64.so.2` which is usually in the `.interp` section of dynamically linked
-binaries. When this is done, obviously the original binary doesn't run, instead the code from
-`main.rs` runs, after which it exits.
-
-Do not use this for anything, it's probably riddled with bugs.
-
-## On all the flags
-- So we need nightly in 'rust-toolchain.toml' to get access to the new-style `asm!` macro.
-- `-C link-arg=-nostartfile` to prevent linking with libc.
-- `-C link-arg=-static` to tell the compiler to make a static binary.
-- `-C relocation-model=pic` to ensure the code is position independent, which is necessary when using as an interpreter.
-- `panic = "abort"` to avoid requirements on `eh_personality`.
-
-
-## Notes
-
-### On rebuilding the core library
+## On rebuilding the core library
 The `core` library _must_ be rebuilt, I'm not certain why, but if we don't and we format a 
 floating point number we get a segfault from somewhere in the float formatter;
 ```
@@ -47,14 +22,46 @@ So basically, we need to rebuild the core library.
 cargo b -Z build-std=core --target x86_64-unknown-linux-gnu
 ```
 
-The Makefile provides convenience helpers for this that allow using `make r` to run the above command.
+-> Further analysis shows that enabling optimisations, even of `opt-level = 1` cause the segfault to happen. (7be297d339bd4e44f570f5362cc75c4138f1c21b)
 
-### Who not just use `x86_64-unknown-linux-musl`?
+## Using a stage1 toolchain.
 
-This resulted in
+So in an attempt to get proper debug symbols for the `core` module, I followed [this](https://rustc-dev-guide.rust-lang.org/building/how-to-build-and-run.html#building-the-compiler) set `debug = true` in the `[rust]` block of the `config.toml` file, and tried again.
+
 ```
-fatal runtime error: assertion failed: thread_info.is_none()
-Aborted
+./x.py build -i library/core
 ```
-When using it as an interp target, besides, I wanted to explore what goes into a user space program
-writing characters to stdout.
+
+```
+Program received signal SIGSEGV, Segmentation fault.
+0x0000555555559315 in core::num::flt2dec::to_shortest_str () at library/core/src/num/flt2dec/mod.rs:364
+364	    let (negative, full_decoded) = decode(v);
+(gdb) bt
+#0  0x0000555555559315 in core::num::flt2dec::to_shortest_str () at library/core/src/num/flt2dec/mod.rs:364
+#1  0x0000555555558fe2 in core::fmt::float::float_to_decimal_common_shortest () at library/core/src/fmt/float.rs:66
+#2  0x000055555555705e in core::fmt::write () at library/core/src/fmt/mod.rs:1168
+#3  0x0000555555556744 in syscall_test::_start () at src/main.rs:31
+(gdb) frame 0
+#0  0x0000555555559315 in core::num::flt2dec::to_shortest_str () at library/core/src/num/flt2dec/mod.rs:364
+364	    let (negative, full_decoded) = decode(v);
+(gdb) info locals
+No locals.
+```
+
+So, still no proper debug information (we would at least get 'optimised out')?
+
+Ah, from the config;
+```
+# Debuginfo level for most of Rust code, corresponds to the `-C debuginfo=N` option of `rustc`.
+# `0` - no debug info
+# `1` - line tables only - sufficient to generate backtraces that include line
+#       information and inlined functions, set breakpoints at source code
+#       locations, and step through execution in a debugger.
+# `2` - full debug info with variable and type information
+```
+
+That makes sense, and is unfortunate, some warning about gigabytes of debug symbols... And;
+
+> Can be overridden for specific subsets of Rust code (rustc, std or tools).
+
+Ok, recompiling with that set to `2` for the std.
