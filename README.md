@@ -159,4 +159,16 @@ buf = [core::mem::maybe_uninit::MaybeUninit<u8> {uninit: (), value: core::mem::m
 
 We finally have something, definitely an upgrade over no symbols. Segfault still happens, so that's good.
 
+---
+
+Trying to use the compiler builtins results in; 
+```
+ivor@eagle:~/Documents/Code/rust/syscall_thing/syscall_test$ cargo +stage1 r
+   Compiling cc v1.0.72
+   Compiling compiler_builtins v0.1.66 (https://github.com/rust-lang/compiler-builtins#ea0cb5b5)
+error: failed to run custom build command for `compiler_builtins v0.1.66 (https://github.com/rust-lang/compiler-builtins#ea0cb5b5)`
+
+Caused by:
+  process didn't exit successfully: `/home/ivor/Documents/Code/rust/syscall_thing/syscall_test/target/debug/build/compiler_builtins-fbbb7e3cc9b25c66/build-script-build` (signal: 11, SIGSEGV: invalid memory reference)
+```
 

@@ -11,3 +11,6 @@ opt-level = 1
 [profile.release]
 panic = "abort"
 
+[dependencies]
+
+compiler_builtins = { git = "https://github.com/rust-lang/compiler-builtins", features = ["c"]}
