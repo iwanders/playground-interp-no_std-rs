@@ -190,3 +190,8 @@ There, we build the build script with `-nostartfiles`, but we need to be able to
 
 Manually invoking the various steps, where we build `compiler_builtins` without `-nostartfiles` seems to have built a working `-nostartfiles` version of main.rs, which doesn't complain about `memcpy` missing anymore...
 
+
+Hmm, maybe we can use 
+https://github.com/rust-lang/cargo/pull/9322/files
+
+to only apply the `-nostartfiles` to the actual final target?
