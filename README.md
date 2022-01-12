@@ -192,6 +192,8 @@ Manually invoking the various steps, where we build `compiler_builtins` without 
 
 
 Hmm, maybe we can use 
-https://github.com/rust-lang/cargo/pull/9322/files
 
-to only apply the `-nostartfiles` to the actual final target?
+https://github.com/rust-lang/cargo/pull/9322/files
+https://doc.rust-lang.org/cargo/reference/unstable.html#target-applies-to-host
+
+to only apply the `-nostartfiles` to the actual final target? That is not working for `cargo build`, so we always need to specify the `--target x86_64-unknown-linux-gnu` flag.

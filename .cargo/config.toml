@@ -1,3 +1,7 @@
+
+# We need this flag to ensure that the -nostartfiles doesn't apply to build.rs scripts.
+#target-applies-to-host = false
+
 [build]
 rustflags = "-C link-arg=-nostartfiles"        # custom flags to pass to all compiler invocations
 
