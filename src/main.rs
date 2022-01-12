@@ -5,7 +5,7 @@
 // Setting breakpoints in these functions, or changing them into loop{}
 // shows they are not used by the code below, they're merely here to satisfy the linker.
 // mod support;
-
+// extern crate compiler_builtins;
 
 // We need something that implements Write, segfault happens before this, so we don't need to
 // actually implement anything properly.

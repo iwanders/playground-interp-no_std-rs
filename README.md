@@ -172,3 +172,21 @@ Caused by:
   process didn't exit successfully: `/home/ivor/Documents/Code/rust/syscall_thing/syscall_test/target/debug/build/compiler_builtins-fbbb7e3cc9b25c66/build-script-build` (signal: 11, SIGSEGV: invalid memory reference)
 ```
 
+to get the actual build thing; `cargo +stage1 b -Z unstable-options --build-plan` gives a json that's human readable!
+
+Well, invoking that results in;
+```
+error: invalid `--cfg` argument: `feature=c` (expected `key` or `key="value"`)
+```
+Which... I couldn't get right without; https://github.com/rust-lang/rust/issues/66450#issue-523560575
+
+
+Ok, I _think_ the problem is with this step;
+```
+rustc --crate-name build_script_build /home/ivor/.cargo/git/checkouts/compiler-builtins-79341f926ffc30b3/ea0cb5b/build.rs --error-format=json --json=diagnostic-rendered-ansi,future-incompat --crate-type bin --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --cfg 'feature="c"' --cfg 'feature="cc"' --cfg 'feature="compiler-builtins"' --cfg 'feature="default"' --cfg 'feature="mem"' -C metadata=c77bccbbbf784625 -C extra-filename=-c77bccbbbf784625 --out-dir /home/ivor/Documents/Code/rust/syscall_thing/syscall_test/target/debug/build/compiler_builtins-c77bccbbbf784625 -L dependency=/home/ivor/Documents/Code/rust/syscall_thing/syscall_test/target/debug/deps --extern cc=/home/ivor/Documents/Code/rust/syscall_thing/syscall_test/target/debug/deps/libcc-c593bffe40f69992.rlib --cap-lints allow -C link-arg=-nostartfiles
+```
+
+There, we build the build script with `-nostartfiles`, but we need to be able to invoke the build script once build... with that `-C link-arg=-nostartfiles`, that won't work?
+
+Manually invoking the various steps, where we build `compiler_builtins` without `-nostartfiles` seems to have built a working `-nostartfiles` version of main.rs, which doesn't complain about `memcpy` missing anymore...
+

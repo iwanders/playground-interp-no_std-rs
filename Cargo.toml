@@ -8,9 +8,10 @@ license = "MIT OR Apache-2.0"
 [profile.dev]
 panic = "abort"
 opt-level = 1
+debug=true
 [profile.release]
 panic = "abort"
 
 [dependencies]
 
-compiler_builtins = { git = "https://github.com/rust-lang/compiler-builtins", features = ["c"]}
+compiler_builtins = { git = "https://github.com/rust-lang/compiler-builtins", features = ["c", "mem"]}
