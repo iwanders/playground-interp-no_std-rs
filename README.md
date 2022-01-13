@@ -197,3 +197,23 @@ https://github.com/rust-lang/cargo/pull/9322/files
 https://doc.rust-lang.org/cargo/reference/unstable.html#target-applies-to-host
 
 to only apply the `-nostartfiles` to the actual final target? That is not working for `cargo build`, so we always need to specify the `--target x86_64-unknown-linux-gnu` flag.
+
+
+
+---
+
+Ok, but compiler-builtins doesn't compile with older rusts...
+
+So we bring back our own memcpy, and start bisecting.
+
+- +1.41.0-x86_64-unknown-linux-gnu -> works
+- +1.45.0-x86_64-unknown-linux-gnu -> works
+- +1.50.0-x86_64-unknown-linux-gnu -> works
+- +1.55.0-x86_64-unknown-linux-gnu -> *fails*
+- +1.52.0-x86_64-unknown-linux-gnu -> works
+- +1.54.0-x86_64-unknown-linux-gnu -> *fails
+- +1.53.0-x86_64-unknown-linux-gnu -> works
+
+Works ends up spinning on the loop.
+
+So failure is introduced somewhere between 1.53 and 1.54... Cool
