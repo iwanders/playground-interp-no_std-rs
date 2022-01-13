@@ -217,3 +217,40 @@ So we bring back our own memcpy, and start bisecting.
 Works ends up spinning on the loop.
 
 So failure is introduced somewhere between 1.53 and 1.54... Cool
+
+1.53: https://github.com/rust-lang/rust/commit/53cb7b09b00cbea8754ffb78e7e3cb521cb8af4b
+
+1.54: https://github.com/rust-lang/rust/commit/a178d0322ce20e33eac124758e837cbd80a6f633
+
+Oh, those commits are outside the repo?
+
+https://github.com/rust-lang/rust/compare/1.53.0...1.54.0
+
+Well then... 5k+ commits.
+
+https://github.com/rust-lang/cargo-bisect-rustc/blob/master/TUTORIAL.md
+
+whoa, if that can actually grab the binaries from like 1.53... that all sounds amazing.
+
+https://github.com/rust-lang/cargo-bisect-rustc/blob/master/TUTORIAL.md#testing-with-a-script
+
+Let's make a script that returns `0` for success, and non zero for failure. So the segfault is 139, we just need a timeout on the loop.
+
+This is an odd discovery; 
+
+```
+    fn write_str(&mut self, _s: &str) -> Result<(), Error> {
+        panic!()
+        // Ok(())
+    }
+```
+
+Works with 1.53, but 
+```
+    fn write_str(&mut self, _s: &str) -> Result<(), Error> {
+        // panic!()
+        Ok(())
+    }
+```
+still segfaults, even with 1.53... still in grisu. Maybe the issue moves around depending on how the code is written?
+

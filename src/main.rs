@@ -12,8 +12,9 @@ mod support;
 struct WritableThing{}
 use core::fmt::Error;
 impl fmt::Write for WritableThing {
-    fn write_str(&mut self, s: &str) -> Result<(), Error> {
-        panic!()
+    fn write_str(&mut self, _s: &str) -> Result<(), Error> {
+        // panic!()
+        Ok(())
     }
 }
 
