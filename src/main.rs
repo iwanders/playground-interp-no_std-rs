@@ -1,25 +1,18 @@
 #![no_std]
 #![no_main]
 
-// Need to provide memcmp, memcpy and memset.
-// Setting breakpoints in these functions, or changing them into loop{}
-// shows they are not used by the code below, they're merely here to satisfy the linker.
-// mod support;
-// extern crate compiler_builtins;
-
 // We need something that implements Write, segfault happens before this, so we don't need to
 // actually implement anything properly.
 struct WritableThing{}
 use core::fmt::Error;
 impl fmt::Write for WritableThing {
-    fn write_str(&mut self, s: &str) -> Result<(), Error> {
+    fn write_str(&mut self, _s: &str) -> Result<(), Error> {
         panic!()
     }
 }
 
 // Import fmt from the core crate.
 use core::fmt;
-
 
 // The entry point to our binary.
 #[no_mangle]
