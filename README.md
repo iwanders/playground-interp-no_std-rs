@@ -205,7 +205,13 @@ to only apply the `-nostartfiles` to the actual final target? That is not workin
 Ok, but compiler-builtins doesn't compile with older rusts...
 
 So we bring back our own memcpy, and start bisecting.
+For:
 
+```
+    fn write_str(&mut self, _s: &str) -> Result<(), Error> {
+        panic!()
+    }
+```
 - +1.41.0-x86_64-unknown-linux-gnu -> works
 - +1.45.0-x86_64-unknown-linux-gnu -> works
 - +1.50.0-x86_64-unknown-linux-gnu -> works
@@ -241,7 +247,6 @@ This is an odd discovery;
 ```
     fn write_str(&mut self, _s: &str) -> Result<(), Error> {
         panic!()
-        // Ok(())
     }
 ```
 
@@ -253,4 +258,19 @@ Works with 1.53, but
     }
 ```
 still segfaults, even with 1.53... still in grisu. Maybe the issue moves around depending on how the code is written?
+
+
+For:
+```
+    fn write_str(&mut self, _s: &str) -> Result<(), Error> {
+        Ok(())
+    }
+```
+- +1.40.0-x86_64-unknown-linux-gnu -> works
+- +1.52.0-x86_64-unknown-linux-gnu -> fails
+- +1.45.0-x86_64-unknown-linux-gnu -> works
+- +1.48.0-x86_64-unknown-linux-gnu -> fails
+- +1.47.0-x86_64-unknown-linux-gnu -> Works
+
+So between 1.47 and 1.48... But swapping back to `panic!()` does make it pass again.
 
