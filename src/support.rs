@@ -38,3 +38,17 @@ pub unsafe extern "C" fn memcmp(s1: *const u8, s2: *const u8, size: usize) -> i3
     }
     0
 }
+
+pub unsafe fn strlen(s1: *const u8, limit: usize) -> usize
+{
+    let mut l: isize = 0;
+    while l < limit as isize
+    {
+        if *(s1.offset(l)) == 0
+        {
+            return l as usize;
+        }
+        l += 1;
+    }
+    return limit
+}

@@ -1,5 +1,7 @@
 #![no_std]
+#![feature(naked_functions)]
 // here we go :o
+
 
 mod support;
 mod syscall;
