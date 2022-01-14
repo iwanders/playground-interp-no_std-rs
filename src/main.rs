@@ -36,7 +36,6 @@ pub extern "C" fn _start() -> ! {
     loop {}
 }
 
-
 // Because we have no std we need to provide a panic handler.
 use core::panic::PanicInfo;
 #[panic_handler]

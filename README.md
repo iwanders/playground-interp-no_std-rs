@@ -274,3 +274,5 @@ For:
 
 So between 1.47 and 1.48... But swapping back to `panic!()` does make it pass again.
 
+Can't figure out how to get `asm!` working at this version to exit with another return code to make testing easy yet.
+
