@@ -3,6 +3,9 @@
 // use core::arch;
 use core::arch::asm; // in latest nightly.
 
+// Oh, wow https://blog.rust-lang.org/inside-rust/2020/06/08/new-inline-asm.html
+// that describes how to get the return value ven.
+
 // Well, using alloc is a whole rabbit hole as we don't have malloc. No heap for now...
 // #![feature(default_alloc_error_handler)]
 // extern crate alloc;

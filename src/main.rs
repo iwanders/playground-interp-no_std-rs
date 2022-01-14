@@ -10,8 +10,41 @@ use syscall_test::{exit, print};
 
 use syscall_test::{fmt, fmt::Write, print_sstr, println, StackString};
 
+use syscall_test::abi::{context};
+
+
+static mut rsp: u64 = 0;
+
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+
+    // let mut rsp: u64 = 0;
+    unsafe
+    {
+        core::arch::asm!("mov rdi, rsp", out("rdi") rsp);
+        println!("0x{:x}", rsp);
+    }
+/*
+0000000000400180 <_start>:
+  400180:	b8 a8 21 00 00       	mov    $0x21a8,%eax
+  400185:	e8 2d 73 02 00       	callq  4274b7 <__rust_probestack>
+  40018a:	48 29 c4             	sub    %rax,%rsp
+  40018d:	48 89 e7             	mov    %rsp,%rdi
+  400190:	48 89 3d 69 ee 22 00 	mov    %rdi,0x22ee69(%rip)        # 62f000 <__bss_start>
+
+rsp really is: 0x7fffffffdcd0
+then jump over callq
+sub
+rsp now is:    0x7fffffffbb28
+Then we copy rsp to rdi, at which it becomes 0x7fffffffbb28
+
+and that gets stored into variable rsp. So basically, bummer, this rust probestack pretty much
+ruins our day here... guess _start is usually written in assembly to avoid such issues?
+*/
+
+    let context = context();
+    context.dump();
+
     // write();
     // print("hello");
     // printauxv();

@@ -4,6 +4,7 @@
 mod support;
 mod syscall;
 pub use crate::syscall::{exit, write};
+pub mod abi;
 
 /// Safe function to write a string to stdout.
 pub fn print(input: &str) {
