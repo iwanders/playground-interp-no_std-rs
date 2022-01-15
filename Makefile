@@ -62,5 +62,5 @@ test_interp_swap_interp:
 
 test_interp: build test_interp_build_binary test_interp_swap_interp
 	echo "Here goes!"
-	$(TEST_BINARY)
+	$(TEST_BINARY) arg0 arg1 arg2
 .PHONY: test_interp

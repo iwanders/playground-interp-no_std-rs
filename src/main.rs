@@ -2,26 +2,20 @@
 #![no_main]
 #![feature(naked_functions)]
 // here we go :o
-// #![feature(asm)]
 
-// use syscall_test;
+
 extern crate syscall_test;
-use syscall_test::{exit, print};
 
-use syscall_test::{fmt, fmt::Write, print_sstr, println, StackString};
-
-use syscall_test::{abi::context};
-
-
+use syscall_test::{exit, context, println};
+use syscall_test::io::*;
 
 #[no_mangle]
 pub fn main() -> ! {
-
     let context = context();
     context.dump();
     /*
 
-*/
+    */
     // write();
     // print("hello");
     // printauxv();
@@ -55,12 +49,10 @@ pub fn main() -> ! {
     loop {}
 }
 
-
-
 use core::panic::PanicInfo;
 #[panic_handler]
-pub fn panic(_info: &PanicInfo) -> ! {
-    print("\nPanic!");
+pub fn panic(info: &PanicInfo) -> ! {
+    println!("{}", info);
     exit(99);
     loop {}
 }
