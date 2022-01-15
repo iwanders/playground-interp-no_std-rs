@@ -3,11 +3,10 @@
 #![feature(naked_functions)]
 // here we go :o
 
-
 extern crate syscall_test;
 
-use syscall_test::{exit, context, println};
 use syscall_test::io::*;
+use syscall_test::{context, exit, println};
 
 #[no_mangle]
 pub fn main() -> ! {
@@ -45,6 +44,8 @@ pub fn main() -> ! {
 
     print("z");
     print("x\n");
+
+    // context.entry();
     exit(0);
     loop {}
 }

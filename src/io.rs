@@ -1,5 +1,5 @@
 pub use core::fmt::Write;
-use syscall::{write};
+use syscall::write;
 
 /// Safe function to write a string to stdout.
 pub fn print(input: &str) {

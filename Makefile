@@ -50,6 +50,7 @@ test_interp_readelf_all:
 
 test_interp_build_binary:
 	g++ ./test_interp/main.cpp -o $(TEST_BINARY)
+	cp $(TEST_BINARY) /tmp/orig_test_binary
 .PHONY: test_interp_build_binary
 
 test_interp_swap_interp:
