@@ -7,17 +7,44 @@ use core::mem::transmute;
 
 use crate::support::strlen;
 
+
+type ConstCharPtr = *const u8;
+type ConstCharPtrArray = *const ConstCharPtr;
 pub struct AbiContext {
-    pub rsp: *const u8,
+    rsp: *const u8,
+    arg_count: usize,
+    arg_ptr: ConstCharPtrArray,
+    environ_ptr: ConstCharPtrArray,
+    environ_count: usize,
 }
 
 impl AbiContext {
-    pub fn new(rsp: *const u8) -> Self {
-        AbiContext { rsp }
-    }
-    pub fn argc(&self) -> usize {
+    unsafe fn setup(&mut self)
+    {
         // argc is at the location of rsp.
-        unsafe { *transmute::<*const u8, *const usize>(self.rsp) }
+        self.arg_count = *transmute::<*const u8, *const usize>(self.rsp);
+
+        // arguments are one byte furher.
+        self.arg_ptr = transmute::<*const u8, ConstCharPtrArray>(self.rsp.offset(8));
+
+        // environs are a bit further still.
+        self.environ_ptr = transmute::<*const u8, ConstCharPtrArray>(self.rsp.offset(8 + 8 + 8 * self.arg_count as isize));
+
+        // Determine environ_count:
+        while *self.environ_ptr.offset(self.environ_count as isize) != 0 as ConstCharPtr
+        {
+            self.environ_count += 1;
+        }
+    }
+
+    pub fn new(rsp: *const u8) -> Self {
+        let mut v = AbiContext { rsp, arg_count: 0, arg_ptr: 0 as ConstCharPtrArray, environ_ptr: 0 as ConstCharPtrArray, environ_count: 0 };
+        unsafe{v.setup();}
+        v
+    }
+
+    pub fn argc(&self) -> usize {
+        self.arg_count
     }
 
     pub fn argv_bytes(&self, index: usize) -> &[u8] {
@@ -25,9 +52,7 @@ impl AbiContext {
             panic!("Requested argv beyond argc.");
         }
         unsafe {
-            let arg_ptr =
-                transmute::<*const u8, *const u64>(self.rsp.offset((index + 1) as isize * 8));
-            let arg = transmute::<u64, *const u8>(*arg_ptr);
+            let arg = *self.arg_ptr.offset(index as isize);
             let len = strlen(arg, 1024);
             core::slice::from_raw_parts(arg, len)
         }
@@ -37,12 +62,37 @@ impl AbiContext {
         core::str::from_utf8(self.argv_bytes(index))
     }
 
+    pub fn envc(&self) -> usize {
+        self.environ_count
+    }
+
+    pub fn env(&self, index: usize) -> Result<&str, core::str::Utf8Error> {
+        core::str::from_utf8(self.env_bytes(index))
+    }
+
+    pub fn env_bytes(&self, index: usize) -> &[u8] {
+        if index >= self.envc() {
+            panic!("Requested env beyond envc.");
+        }
+        unsafe {
+            let arg = *self.environ_ptr.offset(index as isize);
+            let len = strlen(arg, 8096);
+            core::slice::from_raw_parts(arg, len)
+        }
+    }
+
     pub fn dump(&self) {
         println!("rsp: {:?}", self.rsp);
         println!("argc: {:?}", self.argc());
         for i in 0..self.argc() {
             // println!("argv_bytes{}: {:?}", i, self.argv_bytes(i));
             println!("argv{}: {:?}", i, self.argv(i));
+        }
+
+        println!("envc: {:?}", self.envc());
+        for i in 0..self.envc() {
+            // println!("argv_bytes{}: {:?}", i, self.argv_bytes(i));
+            println!("env{}: {:?}", i, self.env(i));
         }
     }
 }
