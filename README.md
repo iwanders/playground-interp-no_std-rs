@@ -1,15 +1,19 @@
-# Playground interp no_std
+# Playground intrp no_std
 
 Odd but descriptive repo name. This repo isn't intended to _really_ do anything, it is just me
 playing around trying to make a completely stand-alone binary in Rust. Without relying on libc, the
 dynamic linker and basically all other conveniences we take for granted normally. So manually
-implementing the interaction between userspace and the kernel to print to stdout.
+implementing the interaction systemcall between userspace and the kernel to print to stdout.
 
-My stretch goal was making something that can actually act as an `.interp` target for a dynamically
-linked binary, which does work, the built target from `make build` can be used as a substitute for
-`/lib64/ld-linux-x86-64.so.2` which is usually in the `.interp` section of dynamically linked
-binaries. When this is done, obviously the original binary doesn't run, instead the code from
-`main.rs` runs, after which it exits.
+The binary built in this crate can act as an `.interp` target for a dynamically
+linked binary. We can do so by just replacing the  `/lib64/ld-linux-x86-64.so.2` written in the
+`.interp` section. Or just run `make test_interp`, which builds a binary and does the appropriate
+substitution.
+
+When this is done, obviously the original binary doesn't run, instead the code from `main.rs` runs
+first, before it dispatches to the binary it is acting as an interpreter for. This will probably
+result in a segfault as soon as the test binary calls a function that is from glibc, beause the
+actual dynamic linking step is not done.
 
 Do not use this for anything, it's probably riddled with bugs.
 
