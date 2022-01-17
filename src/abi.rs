@@ -9,19 +9,20 @@ use crate::support::strlen;
 
 use core::ffi::c_void;
 
-
-unsafe fn void_as_bytes<'a>(p : &'a *const c_void, limit: usize) -> &'a [u8]
-{
+/// Convert a void pointer with length to a byte slice.
+unsafe fn void_as_bytes<'a>(p: &'a *const c_void, limit: usize) -> &'a [u8] {
     let p = transmute::<*const c_void, *const u8>(*p);
     let len = strlen(p, limit);
     core::slice::from_raw_parts(p, len)
 }
 
-unsafe fn void_as_str<'a>(p: &'a *const c_void, limit: usize) -> Result<&'a str, core::str::Utf8Error> 
-{
+/// Convert a void pointer with maximum string length limit to a proper string.
+unsafe fn void_as_str<'a>(
+    p: &'a *const c_void,
+    limit: usize,
+) -> Result<&'a str, core::str::Utf8Error> {
     core::str::from_utf8(void_as_bytes(&p, limit))
 }
-
 
 #[repr(C)]
 union aux_entry {
@@ -29,28 +30,48 @@ union aux_entry {
     a_ptr: *const c_void,
     a_fnc: unsafe extern "C" fn(),
 }
+/// Struct used to encode the auxiliary vector data.
 #[repr(C)]
 struct auxv_t {
     a_type: i32,
     a_un: aux_entry,
 }
 
-impl core::fmt::Debug for auxv_t
-{
+impl auxv_t {
+    const AT_NULL: i32 = 0;
+    const AT_EXECFD: i32 = 3;
+    const AT_ENTRY: i32 = 9;
+    const AT_UID: i32 = 11;
+    const AT_PLATFORM: i32 = 15;
+    const AT_BASE_PLATFORM: i32 = 24;
+    const AT_EXECFN: i32 = 31;
+}
+
+impl core::fmt::Debug for auxv_t {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
         let mut w = f.debug_struct("auxv_t");
         unsafe {
-        match self.a_type
-        {
-            0 => w.field("NULL", &0),
-            3 => w.field("AT_EXECFD",&format_args!("0x{:x}", &self.a_un.a_val)),
-            11 => w.field("AT_UID",&format_args!("0x{:x}", &self.a_un.a_val)),
-            9 => w.field("AT_ENTRY", &self.a_un.a_ptr),
-            31 => w.field("AT_EXECFN", &format_args!("{:?}", void_as_str(&self.a_un.a_ptr, 1000))),
-            15 => w.field("AT_PLATFORM", &format_args!("{:?}", void_as_str(&self.a_un.a_ptr, 1000))),
-            24 => w.field("AT_BASE_PLATFORM", &format_args!("{:?}", void_as_str(&self.a_un.a_ptr, 1000))),
-            z => w.field("-", &format_args!("{}, 0x{:x}", z, &self.a_un.a_val)),
-        };
+            match self.a_type {
+                auxv_t::AT_NULL => w.field("NULL", &0),
+                auxv_t::AT_EXECFD => {
+                    w.field("AT_EXECFD", &format_args!("0x{:x}", &self.a_un.a_val))
+                }
+                auxv_t::AT_UID => w.field("AT_UID", &format_args!("0x{:x}", &self.a_un.a_val)),
+                auxv_t::AT_ENTRY => w.field("AT_ENTRY", &self.a_un.a_ptr),
+                auxv_t::AT_EXECFN => w.field(
+                    "AT_EXECFN",
+                    &format_args!("{:?}", void_as_str(&self.a_un.a_ptr, 1000)),
+                ),
+                auxv_t::AT_PLATFORM => w.field(
+                    "AT_PLATFORM",
+                    &format_args!("{:?}", void_as_str(&self.a_un.a_ptr, 1000)),
+                ),
+                auxv_t::AT_BASE_PLATFORM => w.field(
+                    "AT_BASE_PLATFORM",
+                    &format_args!("{:?}", void_as_str(&self.a_un.a_ptr, 1000)),
+                ),
+                z => w.field("-", &format_args!("{}, 0x{:x}", z, &self.a_un.a_val)),
+            };
         }
         w.finish()
     }
@@ -59,6 +80,7 @@ impl core::fmt::Debug for auxv_t
 type ConstCharPtr = *const u8;
 type ConstCharPtrArray = *const ConstCharPtr;
 type AuxPtr = *const auxv_t;
+/// Struct to capture the ABI variables and interact with them.
 pub struct AbiContext {
     rsp: *const u8,
     arg_count: usize,
@@ -87,8 +109,10 @@ impl AbiContext {
             self.environ_count += 1;
         }
 
+        // Grab the auxiliary vectors.
         self.aux_ptr = transmute::<*const u8, AuxPtr>(
-            self.rsp.offset(3 * 8 + 8 * (self.arg_count + self.environ_count) as isize),
+            self.rsp
+                .offset(3 * 8 + 8 * (self.arg_count + self.environ_count) as isize),
         );
         while (*self.aux_ptr.offset(self.aux_count as isize)).a_type != 0 {
             self.aux_count += 1;
@@ -111,74 +135,104 @@ impl AbiContext {
         v
     }
 
-    // Dispatches to execfn.
-    pub fn entry(&self) -> !
-    {
+    /// Dispatches to execfn, stored in at_entry.
+    pub fn entry(&self) -> ! {
+        unsafe {
+            let index = self
+                .entry_index()
+                .expect("Caller should check have_entry()");
+
+            let addr: i64 = (*self.aux_ptr.offset(index)).a_un.a_val;
+            let orig_rsp = ORIGINAL_RSP;
+            core::arch::asm!("
+                mov rsp, {zz} // set the original rsp
+                jmp {entry}", zz = in(reg) orig_rsp, entry = in(reg) addr);
+        }
+        unreachable!();
+    }
+
+    /// Obtain the AT_ENTRY index.
+    fn entry_index(&self) -> Option<isize> {
         unsafe {
             let mut v: isize = 0;
             loop {
-                if  (*self.aux_ptr.offset(v)).a_type == 9
-                {
-                    let addr: i64 = (*self.aux_ptr.offset(v)).a_un.a_val;
-                    let orig_rsp = ORIGINAL_RSP;
-                    core::arch::asm!("
-                        mov ebp, 0 // clear some registers
-                        mov r9, 0 // clear some registers
-                        mov rdx, 0 // clear some registers
-                        push 0 // set the original rsp
-                        push {zz} // set the original rsp
-                        jmp {entry}", zz = in(reg) orig_rsp, entry = in(reg) addr);
+                let a_type = (*self.aux_ptr.offset(v)).a_type;
+                if a_type == auxv_t::AT_ENTRY {
+                    return Some(v);
+                } else if a_type == auxv_t::AT_NULL {
+                    break;
                 }
                 v += 1;
             }
         }
-        loop{}
+        None
     }
 
-    fn auxv(&self, index: usize) -> &auxv_t
-    {
-        unsafe{&*self.aux_ptr.offset(index as isize)}
+    /// Check if we are running as an interpreter.
+    pub fn is_interpreter(&self) -> bool {
+        unsafe {
+            if let Some(index) = self.entry_index()
+            {
+                // Check if the AT_ENTRY is not equal to _start
+                // if it isn't, we are acting as an interpreter.
+                let entry_record = (self.auxv(index as isize)).a_un.a_ptr;
+                let start_pointer =  _start as *const unsafe extern "C" fn();
+                return entry_record != start_pointer as *const c_void;
+            }
+        }
+        false
     }
 
+    /// Get an auxiliary vector entry.
+    fn auxv(&self, index: isize) -> &auxv_t {
+        unsafe { &*self.aux_ptr.offset(index) }
+    }
 
+    /// Get the number of arguments.
     pub fn argc(&self) -> usize {
         self.arg_count
     }
 
+    /// Get an argv entry as bytes.
     pub fn argv_bytes(&self, index: usize) -> &[u8] {
         if index >= self.argc() {
             panic!("Requested argv beyond argc.");
         }
         unsafe {
             let arg = *self.arg_ptr.offset(index as isize);
-            let len = strlen(arg, 1024);
+            let len = strlen(arg, usize::MAX);
             core::slice::from_raw_parts(arg, len)
         }
     }
 
+    /// Get an argv entry as string.
     pub fn argv(&self, index: usize) -> Result<&str, core::str::Utf8Error> {
         core::str::from_utf8(self.argv_bytes(index))
     }
 
+    /// Get the environment variable count.
     pub fn envc(&self) -> usize {
         self.environ_count
     }
 
+    /// Get an environment variable as string.
     pub fn env(&self, index: usize) -> Result<&str, core::str::Utf8Error> {
         core::str::from_utf8(self.env_bytes(index))
     }
 
+    /// Get an environment variable as bytes.
     pub fn env_bytes(&self, index: usize) -> &[u8] {
         if index >= self.envc() {
             panic!("Requested env beyond envc.");
         }
         unsafe {
             let arg = *self.environ_ptr.offset(index as isize);
-            let len = strlen(arg, 8096);
+            let len = strlen(arg, usize::MAX);
             core::slice::from_raw_parts(arg, len)
         }
     }
 
+    /// Dump the execution environment, rsp, all arg, env and aux data.
     pub fn dump(&self) {
         println!("rsp: {:?}", self.rsp);
         println!("argc: {:?}", self.argc());
@@ -195,22 +249,26 @@ impl AbiContext {
         println!("self.aux_count: {:?}", self.aux_count);
         for i in 0..self.aux_count {
             // println!("argv_bytes{}: {:?}", i, self.argv_bytes(i));
-            println!("auxv{}: {:?}", i, self.auxv(i));
+            println!("auxv{}: {:?}", i, self.auxv(i as isize));
         }
     }
 }
 
+/// Static variable to store the original RSP back when we first start.
 static mut ORIGINAL_RSP: u64 = 0;
 
+/// Function to create a new instance of the context.
 pub fn context() -> AbiContext {
     return AbiContext::new(unsafe { transmute::<u64, *const u8>(crate::abi::ORIGINAL_RSP) });
 }
 
-// state that there will be a main.
+/// State that there will be a main() function we'll be starting from our preamble functions below.
 extern "C" {
     pub fn main();
 }
 
+/// Stage 2 starter, this function is not naked, so we can store RSP for real, and start the main()
+/// function.
 #[no_mangle]
 pub unsafe extern "C" fn _start_stage2() {
     // Rdi was stored from rsp in _start, so here we can really read it, and store it for
@@ -221,6 +279,8 @@ pub unsafe extern "C" fn _start_stage2() {
     main();
 }
 
+/// The entry point of our program, naked function to prevent the prologue, this function copies
+/// $rsp into rdx and then calls the stage 2 start function.
 #[no_mangle]
 #[naked] // disable prologue; https://github.com/nox/rust-rfcs/blob/master/text/1201-naked-fns.md
 pub unsafe extern "C" fn _start() {

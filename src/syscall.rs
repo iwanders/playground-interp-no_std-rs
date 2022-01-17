@@ -11,7 +11,7 @@ use core::arch::asm; // in latest nightly.
 // extern crate alloc;
 // use alloc::string::String;
 
-// Exits the problam with a return code.
+/// Exits the program with a return code.
 pub fn exit(return_code: i32) {
     // https://github.com/torvalds/linux/blob/v4.15/arch/x86/entry/syscalls/syscall_32.tbl
     unsafe {
@@ -41,7 +41,7 @@ pub fn exit(return_code: i32) {
                  );
         */
 
-        // Better to use
+        // Better to use the new unstable syntax
         // https://doc.rust-lang.org/beta/unstable-book/library-features/asm.html
 
         // So, set eax with the system call id
@@ -68,16 +68,6 @@ pub unsafe fn write(fd: u64, buffer: *const char, length: u64) {
 
     const SYSCALL_ID: u32 = 1; // write, in 64 bit syscall.
 
-    // So, presumably, this string is passed in as a pointer, that's my hunch at least.
-    // stdout is 1.
-
-    // unsafe {
-    // let f = &Z as *const char;
-    // asm!("int $$0x80", in("eax") SYSCALL_ID, in("ebx") FD, in("ecx") f, in("edx") SIZE);
-    // }
-    // Well, that doesn't work, it also doesn't crash.
-    // Oh, since size is 64 bits... we probably can't use the interrupt thing anymore as the edx
-    // register is 32 bits or something?
     // https://github.com/torvalds/linux/blob/v3.13/arch/x86/syscalls/syscall_64.tbl
 
     // Page 670 of https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-2b-manual.pdf

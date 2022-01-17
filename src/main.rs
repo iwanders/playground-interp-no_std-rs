@@ -1,6 +1,7 @@
 #![no_std]
-#![no_main]
-#![feature(naked_functions)]
+// Even though we have main, we do all handling around main ourselves, so we don't want Rust to
+// do anything around that.
+#![no_main]  
 // here we go :o
 
 extern crate syscall_test;
@@ -12,48 +13,26 @@ use syscall_test::{context, exit, println};
 pub fn main() -> ! {
     let context = context();
     context.dump();
-    /*
 
-    */
-    // write();
-    // print("hello");
-    // printauxv();
-    // printb("b");
-    // print("hello");
-    // println!("{} haha", 1);
-
-    for i in 0..10 {
-        // println!("Lorem {} ipsum {:?} dolor {} ", 5, Some(i), "foo");
-        println!("Lorem {} ipsum {:?} dolor {:?} ", 5, Some(i), Some(3.3));
-        // println!("Lorem {} ipsum {:?} dolor {} ", 5, Some(3.3), "foo");
+    if context.is_interpreter() {
+        println!("We are an interpreter, dispatching to main application entry.");
+        context.entry();
     }
 
-    // stackallocate();
+    // when this is called without checking is_interpreter, we endlessly ged the debug prints, so
+    // that implies we're setting up rsp correctly again.
+    // context.entry(); 
 
-    // exit(0);
-
-    for _i in 0..1 {
-        print(".");
-    }
-    // lets do some stack exhaustion and see where it fails...
-    // recurser(0);
-    // x0000555555554505 in test::recurser (z=262007) at src/main.rs:218
-    // 1048028 bytes... that's not too bad... sounds like my stack string should also work??
-
-    // Unless that... grows from the other side or something?
-
-    print("z");
-    print("x\n");
-
-    // context.entry();
+    // Lets exit gracefully.
     exit(0);
-    loop {}
+    unreachable!();
 }
 
 use core::panic::PanicInfo;
+/// Handler for panic events, prints and exists using the syscall.
 #[panic_handler]
 pub fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
     exit(99);
-    loop {}
+    unreachable!();
 }
