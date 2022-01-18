@@ -1,13 +1,13 @@
 #![no_std]
 // Even though we have main, we do all handling around main ourselves, so we don't want Rust to
 // do anything around that.
-#![no_main]  
+#![no_main]
 // here we go :o
 
 extern crate syscall_test;
 
 use syscall_test::io::*;
-use syscall_test::{context, exit, println};
+use syscall_test::{context, println, syscall::exit};
 
 #[no_mangle]
 pub fn main() -> ! {
@@ -21,8 +21,8 @@ pub fn main() -> ! {
 
     // when this is called without checking is_interpreter, we endlessly ged the debug prints, so
     // that implies we're setting up rsp correctly again.
-    // context.entry(); 
-
+    // context.entry();
+    syscall_test::syscall::test::test_all();
     // Lets exit gracefully.
     exit(0);
     unreachable!();

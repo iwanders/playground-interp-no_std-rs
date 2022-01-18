@@ -1,11 +1,11 @@
+use crate::syscall::write;
 pub use core::fmt::Write;
-use crate::write;
 
 const STDOUT_FD: u64 = 1;
 /// Safe function to write a string to stdout using the syscall.
 pub fn print(input: &str) {
     unsafe {
-        let f = input.as_ptr() as *const char;
+        let f = input.as_ptr() as *const u8;
         write(STDOUT_FD, f, input.len() as u64);
     }
 }
@@ -20,8 +20,8 @@ pub struct StackString {
 }
 impl StackString {
     pub const STACK_STRING_SIZE: usize = STACK_STRING_SIZE;
-    fn as_ptr(&self) -> *const char {
-        self.buffer.as_ptr() as *const char
+    fn as_ptr(&self) -> *const u8 {
+        self.buffer.as_ptr() as *const u8
     }
     fn len(&self) -> usize {
         self.size
@@ -58,7 +58,7 @@ impl core::fmt::Write for StackString {
 /// Helper function to print a stackstring.
 pub fn print_sstr(input: &StackString) {
     unsafe {
-        let f = input.as_ptr() as *const char;
+        let f = input.as_ptr() as *const u8;
         let l = input.len() as u64;
         write(STDOUT_FD, f, l);
     }

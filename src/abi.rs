@@ -9,20 +9,7 @@ use crate::support::strlen;
 
 use core::ffi::c_void;
 
-/// Convert a void pointer with length to a byte slice.
-unsafe fn void_as_bytes<'a>(p: &'a *const c_void, limit: usize) -> &'a [u8] {
-    let p = transmute::<*const c_void, *const u8>(*p);
-    let len = strlen(p, limit);
-    core::slice::from_raw_parts(p, len)
-}
-
-/// Convert a void pointer with maximum string length limit to a proper string.
-unsafe fn void_as_str<'a>(
-    p: &'a *const c_void,
-    limit: usize,
-) -> Result<&'a str, core::str::Utf8Error> {
-    core::str::from_utf8(void_as_bytes(&p, limit))
-}
+use crate::util::{void_as_bytes, void_as_str};
 
 #[repr(C)]
 union aux_entry {
@@ -171,12 +158,11 @@ impl AbiContext {
     /// Check if we are running as an interpreter.
     pub fn is_interpreter(&self) -> bool {
         unsafe {
-            if let Some(index) = self.entry_index()
-            {
+            if let Some(index) = self.entry_index() {
                 // Check if the AT_ENTRY is not equal to _start
                 // if it isn't, we are acting as an interpreter.
                 let entry_record = (self.auxv(index as isize)).a_un.a_ptr;
-                let start_pointer =  _start as *const unsafe extern "C" fn();
+                let start_pointer = _start as *const unsafe extern "C" fn();
                 return entry_record != start_pointer as *const c_void;
             }
         }

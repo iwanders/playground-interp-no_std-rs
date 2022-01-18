@@ -5,8 +5,7 @@
 mod abi;
 pub mod io;
 mod support;
-mod syscall;
+mod util;
+pub mod syscall;
 
 pub use abi::context;
-
-pub use syscall::{exit, write};
