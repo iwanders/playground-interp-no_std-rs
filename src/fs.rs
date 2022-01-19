@@ -75,6 +75,18 @@ impl File {
         }
         Err("Something went wrong getting the size.")
     }
+
+    /// Memory map this file into memory, File object can be dropped afterwards.
+    pub unsafe fn mmap(&self, prot: i32, flags: i32) -> Result<*mut u8, &'static str>
+    {
+        let size = self.size()?;
+        let r = syscall::mmap(0, size, prot, flags, self.fd, 0);
+        if r == u64::MAX
+        {
+            return Err("Mapping the file went wrong.");
+        }
+        Ok(r as *mut u8)
+    }
 }
 impl Drop for File {
     fn drop(&mut self) {
