@@ -9,7 +9,7 @@ use crate::support::strlen;
 
 use core::ffi::c_void;
 
-use crate::util::{void_as_bytes, void_as_str};
+use crate::util::void_as_str;
 
 #[repr(C)]
 union aux_entry {
@@ -260,6 +260,9 @@ pub unsafe extern "C" fn _start_stage2() {
     // Rdi was stored from rsp in _start, so here we can really read it, and store it for
     // posterity.
     core::arch::asm!("nop", out("rdi") ORIGINAL_RSP);
+
+    // Ensure memory can do setup, that is allocate the first record.
+    crate::mem::setup();
 
     // Then, we can go into main itself.
     main();

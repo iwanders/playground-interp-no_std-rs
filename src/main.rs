@@ -22,8 +22,7 @@ pub fn main() -> ! {
     // when this is called without checking is_interpreter, we endlessly ged the debug prints, so
     // that implies we're setting up rsp correctly again.
     // context.entry();
-    syscall_test::syscall::test::test_all();
-    syscall_test::fs::test::test_all();
+    syscall_test::test_all();
     // Lets exit gracefully.
     exit(0);
     unreachable!();

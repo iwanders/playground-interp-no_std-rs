@@ -10,3 +10,12 @@ mod util;
 
 pub use abi::context;
 pub mod fs;
+
+mod mem;
+
+pub fn test_all()
+{
+    crate::syscall::test::test_all();
+    crate::fs::test::test_all();
+    crate::mem::test::test_all();
+}

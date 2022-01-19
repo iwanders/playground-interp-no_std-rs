@@ -3,8 +3,6 @@
 // use core::arch;
 use core::arch::asm; // in latest nightly.
 
-use core::ffi::c_void;
-
 // Oh, wow https://blog.rust-lang.org/inside-rust/2020/06/08/new-inline-asm.html
 // that describes how to get the return value even.
 
@@ -125,26 +123,45 @@ pub unsafe fn close(fd: u64) -> u64 {
     syscall_1_arg(SYSCALL_ID, fd as u64)
 }
 
-// Didn't want to implement the entire stat header with all its types...
-pub fn stat_filesize(path: &str) -> Option<i64> {
-    let mut stat_struct: [u8; 144] = [0; 144];
+type Stat = [u8; 144];
+fn get_filesize(stat: &Stat) -> i64
+{
+    // let mut stat_struct: Stat = [0; 144];
     // filesize is at 48 bytes in.
     // filesize is 8 bytes itself. And it is signed.
-
-    let path_buffer = str_to_zero_padded(&path);
-
-    const SYSCALL_ID: u32 = 4; // 4 is stat, fstat is 5.
-    let path_p: *const u8 = &(path_buffer[0]) as *const u8;
-    let stat_struct_p: *mut u8 = &mut (stat_struct[0]) as *mut u8;
     unsafe {
-        if syscall_3_arg(SYSCALL_ID, path_p as u64, stat_struct_p as u64, 0) == 0 {
-            return Some(*core::mem::transmute::<*mut u8, *mut i64>(
-                stat_struct_p.offset(48),
-            ));
+        let stat_struct_p: *const u8 = &(stat[0]) as *const u8;
+        return *core::mem::transmute::<*const u8, *const i64>(
+            stat_struct_p.offset(48)
+        );
+    }
+}
+
+fn stat_syscall(call_id: u32, call_value: u64) -> Option<Stat>
+{
+    let mut stat_struct: Stat = [0; 144];
+    unsafe {
+        let stat_struct_p: *mut u8 = &mut (stat_struct[0]) as *mut u8;
+        if syscall_3_arg(call_id, call_value, stat_struct_p as u64, 0) == 0 {
+            return Some(stat_struct);
         }
     }
     None
 }
+// Didn't want to implement the entire stat header with all its types...
+pub fn stat_filesize(path: &str) -> Option<i64> {
+    let path_buffer = str_to_zero_padded(&path);
+    const SYSCALL_ID: u32 = 4; // 4 is stat, fstat is 5.
+    let path_p: *const u8 = &(path_buffer[0]) as *const u8;
+    let v = stat_syscall(SYSCALL_ID, path_p as u64)?;
+    return Some(get_filesize(&v));
+}
+pub fn fstat_filesize(fd: u64) -> Option<i64> {
+    const SYSCALL_ID: u32 = 5; // 4 is stat, fstat is 5.
+    let v = stat_syscall(SYSCALL_ID, fd)?;
+    return Some(get_filesize(&v));
+}
+
 
 // syscall 9 is mmap; https://github.com/torvalds/linux/blob/5bfc75d92efd494db37f5c4c173d3639d4772966/arch/x86/kernel/sys_x86_64.c#L89-L97
 // https://github.com/torvalds/linux/blob/763978ca67a3d7be3915e2035e2a6c331524c748/mm/mmap.c#L1637-L1642
@@ -155,10 +172,10 @@ pub fn brk(desired: u64) -> u64 {
     unsafe { syscall_1_arg(SYSCALL_ID, desired) }
 }
 
-pub fn sbrk(delta: i64) -> *mut c_void {
+pub fn sbrk(delta: i64) -> *mut u8 {
     let current = brk(0);
     let new = delta + current as i64;
-    brk(new as u64) as *mut c_void
+    brk(new as u64) as *mut u8
 }
 
 pub mod test {

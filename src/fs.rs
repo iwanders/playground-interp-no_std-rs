@@ -78,6 +78,15 @@ impl File
             Err("Something went wrong")
         }
     }
+
+    pub fn size(&self) -> Result<usize, &'static str>
+    {
+        if let Some(v) = syscall::fstat_filesize(self.fd)
+        {
+            return Ok(v as usize);
+        }
+        Err("Something went wrong getting the size.")
+    }
 }
 impl Drop for File
 {
@@ -87,7 +96,8 @@ impl Drop for File
     }
 }
 
-pub fn load(path: &str) -> &'static [u8]
+// This has got to be the worst function in the history of well... Rust functions? :D
+pub fn read_and_leak(path: &str) -> &'static [u8]
 {
     // let binary_blob = fs::read("test/test").expect("Can't read binary");
     &[3, 8]
@@ -96,8 +106,6 @@ pub fn load(path: &str) -> &'static [u8]
 
 pub mod test {
     use super::*;
-    use crate::io::*;
-    use crate::println;
     pub fn test_all() {
         test_file_io();
     }
@@ -107,14 +115,16 @@ pub mod test {
         // Write
         {
             let f = File::open("/tmp/test_fs_file", "w").expect("should work?");
-            f.write(test_string.as_bytes());
+            f.write(test_string.as_bytes()).expect("Should succeed.");
         }
         // Read
         {
             let mut tmp_buffer: [u8; 1024] = [0; 1024];
             let f = File::open("/tmp/test_fs_file", "r").expect("should work?");
+            let size = f.size().expect("If we can open, we can get the size?");
+            assert_eq!(size, test_string.len());
             let amount = f.read_into(&mut tmp_buffer).expect("Should succeed");
-            let read_back = unsafe { core::str::from_utf8(&tmp_buffer[..amount]) }.expect("valid ascii.");
+            let read_back = core::str::from_utf8(&tmp_buffer[..amount]).expect("valid ascii.");
             assert_eq!(read_back, test_string);
         }
     }
