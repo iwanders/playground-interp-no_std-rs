@@ -124,21 +124,17 @@ pub unsafe fn close(fd: u64) -> u64 {
 }
 
 type Stat = [u8; 144];
-fn get_filesize(stat: &Stat) -> i64
-{
+fn get_filesize(stat: &Stat) -> i64 {
     // let mut stat_struct: Stat = [0; 144];
     // filesize is at 48 bytes in.
     // filesize is 8 bytes itself. And it is signed.
     unsafe {
         let stat_struct_p: *const u8 = &(stat[0]) as *const u8;
-        return *core::mem::transmute::<*const u8, *const i64>(
-            stat_struct_p.offset(48)
-        );
+        return *core::mem::transmute::<*const u8, *const i64>(stat_struct_p.offset(48));
     }
 }
 
-fn stat_syscall(call_id: u32, call_value: u64) -> Option<Stat>
-{
+fn stat_syscall(call_id: u32, call_value: u64) -> Option<Stat> {
     let mut stat_struct: Stat = [0; 144];
     unsafe {
         let stat_struct_p: *mut u8 = &mut (stat_struct[0]) as *mut u8;
@@ -161,7 +157,6 @@ pub fn fstat_filesize(fd: u64) -> Option<i64> {
     let v = stat_syscall(SYSCALL_ID, fd)?;
     return Some(get_filesize(&v));
 }
-
 
 // syscall 9 is mmap; https://github.com/torvalds/linux/blob/5bfc75d92efd494db37f5c4c173d3639d4772966/arch/x86/kernel/sys_x86_64.c#L89-L97
 // https://github.com/torvalds/linux/blob/763978ca67a3d7be3915e2035e2a6c331524c748/mm/mmap.c#L1637-L1642

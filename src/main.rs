@@ -25,7 +25,6 @@ pub fn main() -> ! {
     syscall_test::test_all();
     // Lets exit gracefully.
     exit(0);
-    unreachable!();
 }
 
 use core::panic::PanicInfo;
@@ -34,5 +33,4 @@ use core::panic::PanicInfo;
 pub fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
     exit(99);
-    unreachable!();
 }

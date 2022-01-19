@@ -51,6 +51,8 @@ So basically, we need to rebuild the core library.
 cargo b -Z build-std=core --target x86_64-unknown-linux-gnu
 ```
 
+The target must be passed as well, otherwise the `-nostartfiles` gets passed to buildscripts, which prevents them from running succesfully.
+
 The Makefile provides convenience helpers for this that allow using `make r` to run the above command.
 
 ### Who not just use `x86_64-unknown-linux-musl`?
