@@ -5,7 +5,8 @@
 mod abi;
 pub mod io;
 mod support;
-mod util;
 pub mod syscall;
+mod util;
 
 pub use abi::context;
+pub mod fs;

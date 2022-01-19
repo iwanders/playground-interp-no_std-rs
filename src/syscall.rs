@@ -90,27 +90,24 @@ pub unsafe fn read(fd: u64, buffer: *mut u8, length: u64) -> u64 {
     syscall_3_arg(SYSCALL_ID, fd as u64, buffer as u64, length as u64)
 }
 
-
 /// To create a null terminated string, in a clunky way.
-fn str_to_zero_padded(path: &str) -> [u8; 1024]
-{
+pub fn str_to_zero_padded(path: &str) -> [u8; 1024] {
     let mut path_buffer: [u8; 1024] = [0; 1024];
-    for i in 0..path.len()
-    {
+    for i in 0..path.len() {
         path_buffer[i] = path.as_bytes()[i];
     }
     path_buffer
 }
 
 // Modes
-const O_RDONLY: i32 = 0o00000000;
-const O_WRONLY: i32 = 0o00000001;
-const O_RDWR: i32 = 0o00000002;
+pub const O_RDONLY: i32 = 0o00000000;
+pub const O_WRONLY: i32 = 0o00000001;
+pub const O_RDWR: i32 = 0o00000002;
 
 // Flags
-const O_CREAT: i32 = 0o00000100;
-const O_TRUNC: i32 = 0o00001000;
-const O_APPEND: i32 = 0o00002000;
+pub const O_CREAT: i32 = 0o00000100;
+pub const O_TRUNC: i32 = 0o00001000;
+pub const O_APPEND: i32 = 0o00002000;
 
 pub unsafe fn open(path: &str, flags: i32, umode: u16) -> u64 {
     // https://github.com/torvalds/linux/blob/v4.15/fs/open.c#L1072-L1078
@@ -129,8 +126,7 @@ pub unsafe fn close(fd: u64) -> u64 {
 }
 
 // Didn't want to implement the entire stat header with all its types...
-pub fn stat_filesize(path: &str) -> i64
-{
+pub fn stat_filesize(path: &str) -> Option<i64> {
     let mut stat_struct: [u8; 144] = [0; 144];
     // filesize is at 48 bytes in.
     // filesize is 8 bytes itself. And it is signed.
@@ -140,10 +136,14 @@ pub fn stat_filesize(path: &str) -> i64
     const SYSCALL_ID: u32 = 4; // 4 is stat, fstat is 5.
     let path_p: *const u8 = &(path_buffer[0]) as *const u8;
     let stat_struct_p: *mut u8 = &mut (stat_struct[0]) as *mut u8;
-    unsafe{
-        syscall_3_arg(SYSCALL_ID, path_p as u64, stat_struct_p as u64, 0);
-        *core::mem::transmute::<*mut u8, *mut i64>(stat_struct_p.offset(48))
+    unsafe {
+        if syscall_3_arg(SYSCALL_ID, path_p as u64, stat_struct_p as u64, 0) == 0 {
+            return Some(*core::mem::transmute::<*mut u8, *mut i64>(
+                stat_struct_p.offset(48),
+            ));
+        }
     }
+    None
 }
 
 // syscall 9 is mmap; https://github.com/torvalds/linux/blob/5bfc75d92efd494db37f5c4c173d3639d4772966/arch/x86/kernel/sys_x86_64.c#L89-L97
@@ -152,22 +152,20 @@ pub fn stat_filesize(path: &str) -> i64
 pub fn brk(desired: u64) -> u64 {
     // https://github.com/torvalds/linux/blob/763978ca67a3d7be3915e2035e2a6c331524c748/mm/mmap.c#L195
     const SYSCALL_ID: u32 = 12;
-    unsafe{syscall_1_arg(SYSCALL_ID, desired)}
+    unsafe { syscall_1_arg(SYSCALL_ID, desired) }
 }
 
 pub fn sbrk(delta: i64) -> *mut c_void {
     let current = brk(0);
-    let new = delta + current as i64 ;
+    let new = delta + current as i64;
     brk(new as u64) as *mut c_void
 }
-
 
 pub mod test {
     use super::*;
     use crate::io::*;
-    use crate::{println};
-    pub fn test_all()
-    {
+    use crate::println;
+    pub fn test_all() {
         test_brk();
         test_file_io();
     }
@@ -178,36 +176,37 @@ pub mod test {
         println!("0x{:?}", x);
         let x = sbrk(-10000);
         println!("0x{:?}", x);
-        
     }
 
     pub fn test_file_io() {
         let test_path = "/tmp/barz";
-        let f = unsafe{open(test_path, O_CREAT|O_RDWR, 0o0640)};
+        let f = unsafe { open(test_path, O_CREAT | O_RDWR, 0o0640) };
         println!("{:?}", f);
-        
+
         assert!(f != 0);
 
         let test_string = "My awesome test string.\n";
         let path_buffer = str_to_zero_padded(&test_string);
         unsafe {
             let path_p: *const u8 = &(path_buffer[0]) as *const u8;
-            let write_res = write(f, path_p , test_string.len() as u64);
+            let write_res = write(f, path_p, test_string.len() as u64);
             assert_eq!(write_res, test_string.len() as u64);
         }
-        let res = unsafe{close(f)};
+        let res = unsafe { close(f) };
         assert!(res == 0);
 
         let v = stat_filesize(test_path);
+        assert!(v.is_some());
+        let v = v.unwrap();
         assert_eq!(v, test_string.len() as i64);
 
-        let f = unsafe{open(test_path, O_RDONLY, 0)};
+        let f = unsafe { open(test_path, O_RDONLY, 0) };
         let mut tmp_buffer: [u8; 1024] = [0; 1024];
         let buffer_p: *mut u8 = &mut (tmp_buffer[0]) as *mut u8;
-        let res = unsafe{read(f, buffer_p, tmp_buffer.len() as u64)};
+        let res = unsafe { read(f, buffer_p, tmp_buffer.len() as u64) };
         assert_eq!(res, test_string.len() as u64);
         let buffer_ptr = &(tmp_buffer[0]) as *const u8;
-        let read_back = unsafe{crate::util::u8_as_str(&buffer_ptr, tmp_buffer.len())};
+        let read_back = unsafe { crate::util::u8_as_str(&buffer_ptr, tmp_buffer.len()) };
         assert_eq!(read_back.unwrap(), test_string);
     }
 }

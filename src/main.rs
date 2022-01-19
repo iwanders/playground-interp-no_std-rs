@@ -23,6 +23,7 @@ pub fn main() -> ! {
     // that implies we're setting up rsp correctly again.
     // context.entry();
     syscall_test::syscall::test::test_all();
+    syscall_test::fs::test::test_all();
     // Lets exit gracefully.
     exit(0);
     unreachable!();
