@@ -1,5 +1,8 @@
 use crate::syscall;
 
+use crate::io::*;
+use crate::println;
+
 struct File
 {
     fd: u64,
@@ -95,12 +98,24 @@ impl Drop for File
         unsafe{syscall::close(self.fd)};
     }
 }
-
 // This has got to be the worst function in the history of well... Rust functions? :D
-pub fn read_and_leak(path: &str) -> &'static [u8]
+pub fn read_and_leak(path: &str) -> Result<&'static [u8], &'static str>
 {
+    let f = File::open(path, "r")?;
+    let size = f.size()?;
+    println!("Size is {}", size);
+    // allocate a piece of memory for that.
+    
+    let p = unsafe{crate::mem::malloc(size)};
+    
+    let slice = unsafe{core::slice::from_raw_parts_mut(p, size)};
     // let binary_blob = fs::read("test/test").expect("Can't read binary");
-    &[3, 8]
+    let res = f.read_into(slice)?;
+    if res == size
+    {
+        return Ok(slice);
+    }
+    Err("Didn't read expected size, did the file change?")
 }
 
 
@@ -126,6 +141,11 @@ pub mod test {
             let amount = f.read_into(&mut tmp_buffer).expect("Should succeed");
             let read_back = core::str::from_utf8(&tmp_buffer[..amount]).expect("valid ascii.");
             assert_eq!(read_back, test_string);
+        }
+        // Test read and leak.
+        {
+            let z = read_and_leak("/tmp/test_fs_file");
+            println!("z: {:?}", z);
         }
     }
 }

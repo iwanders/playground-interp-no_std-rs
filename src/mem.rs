@@ -2,6 +2,38 @@
 use crate::io::*;
 use crate::println;
 
+#[derive(Debug)]
+pub struct Chunk
+{
+    p: *mut u8,
+    amount: usize
+}
+
+impl Chunk
+{
+    pub fn len(&self) -> usize
+    {
+        self.amount
+    }
+    pub fn as_ref(&self) -> &[u8]
+    {
+        unsafe{core::slice::from_raw_parts(self.p, self.len())}
+    }
+    pub fn as_mut(&mut self) -> &mut [u8]
+    {
+        unsafe{core::slice::from_raw_parts_mut(self.p, self.len())}
+    }
+}
+
+impl Drop for Chunk
+{
+    fn drop(&mut self)
+    {
+        // println!("Drop on {:?}", self.p);
+        unsafe {free(self.p)}
+    }
+}
+
 // This is a pretty bad allocator...
 #[derive(Debug)]
 #[repr(C)]
@@ -21,7 +53,7 @@ unsafe fn record_at<'a>(current_position: *mut u8) -> &'a mut Record
     return &mut *current_record;
 }
 
-unsafe fn malloc(amount: usize) -> *mut u8
+pub unsafe fn malloc(amount: usize) -> *mut u8
 {
     let current_position = crate::syscall::sbrk(0);
     // The previous record is just before that.
@@ -43,6 +75,47 @@ unsafe fn malloc(amount: usize) -> *mut u8
 
     current_position
 }
+
+pub fn malloc_chunk(amount: usize) -> Chunk
+{
+    let p = unsafe{malloc(amount)};
+    Chunk{p, amount}
+}
+
+#[derive(Debug, Default)]
+pub struct RecordStats
+{
+    total: usize,
+    in_use: usize,
+    not_in_use: usize,
+    top_index: usize,
+}
+
+pub fn record_stats() -> RecordStats
+{
+    let mut stats: RecordStats = Default::default();
+    let mut current_position = crate::syscall::sbrk(0);
+    loop
+    {
+        let current_record = unsafe{record_at(current_position)};
+        if current_record.previous == 0 as *mut u8
+        {
+            return stats
+        }
+        stats.total += 1;
+        if current_record.in_use
+        {
+            stats.in_use += 1;
+        }
+        else
+        {
+            stats.not_in_use = 1;
+        }
+        stats.top_index = core::cmp::max(stats.top_index, current_record.index);
+        current_position = current_record.previous;
+    }
+}
+
 
 unsafe fn clean_freed_records()
 {
@@ -109,6 +182,7 @@ pub mod test {
     use super::*;
     pub fn test_all() {
         unsafe {test_malloc()};
+        unsafe {test_chunks()};
         // unsafe {_test_large_malloc()};
     }
     unsafe fn test_malloc()
@@ -120,14 +194,17 @@ pub mod test {
         *(v0.offset(2)) = 3;
         let v1 = malloc(3);
         let v2 = malloc(3);
+        println!("record_stats: {:?}", record_stats());
         *v2 = 1;
         *(v2.offset(1)) = 2;
         *(v2.offset(2)) = 3;
         let v3 = malloc(3);
         free(v3);
         free(v1);
+        println!("record_stats: {:?}", record_stats());
         free(v2);
         let end_position = crate::syscall::sbrk(0);
+        println!("record_stats: {:?}", record_stats());
         assert_eq!(start_position, end_position);
     }
     unsafe fn _test_large_malloc()
@@ -140,6 +217,19 @@ pub mod test {
             *v1 = 1;
             println!("v1: {:?}", v1);
         }
+    }
+
+    fn test_chunks()
+    {
+        println!("test_chunks");
+        println!("record_stats: {:?}", record_stats());
+        let c0 = malloc_chunk(100);
+        {
+            let c1 = malloc_chunk(100);
+            let c2 = malloc_chunk(100);
+            println!("record_stats: {:?}", record_stats());
+        }
+        println!("record_stats: {:?}", record_stats());
     }
 }
 
