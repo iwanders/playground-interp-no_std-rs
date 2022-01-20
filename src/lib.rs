@@ -9,9 +9,10 @@ pub mod syscall;
 mod util;
 
 pub use abi::context;
+pub use abi::AbiContext;
 pub mod fs;
 
-mod mem;
+pub mod mem;
 
 pub fn test_all() {
     crate::fs::test::test_all();

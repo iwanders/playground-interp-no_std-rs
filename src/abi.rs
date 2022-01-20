@@ -122,21 +122,32 @@ impl AbiContext {
         v
     }
 
+
+    /// Jump to the instruction address with rsp set.
+    pub fn jump(address: i64) -> !
+    {
+        unsafe {
+            let orig_rsp = ORIGINAL_RSP;
+            core::arch::asm!("
+                mov rsp, {zz} // set the original rsp
+                jmp {entry}", zz = in(reg) orig_rsp, entry = in(reg) address);
+        }
+        unreachable!();
+        
+    }
+
     /// Dispatches to execfn, stored in at_entry.
     pub fn entry(&self) -> ! {
         unsafe {
             let index = self
                 .entry_index()
                 .expect("Caller should check have_entry()");
-
             let addr: i64 = (*self.aux_ptr.offset(index)).a_un.a_val;
-            let orig_rsp = ORIGINAL_RSP;
-            core::arch::asm!("
-                mov rsp, {zz} // set the original rsp
-                jmp {entry}", zz = in(reg) orig_rsp, entry = in(reg) addr);
+            AbiContext::jump(addr);
         }
         unreachable!();
     }
+
 
     /// Obtain the AT_ENTRY index.
     fn entry_index(&self) -> Option<isize> {

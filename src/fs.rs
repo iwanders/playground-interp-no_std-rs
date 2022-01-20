@@ -77,15 +77,13 @@ impl File {
     }
 
     /// Memory map this file into memory, File object can be dropped afterwards.
-    pub unsafe fn mmap(&self, prot: i32, flags: i32) -> Result<*mut u8, &'static str>
-    {
+    pub unsafe fn mmap(&self, prot: i32, flags: i32) -> Result<&mut [u8], &'static str> {
         let size = self.size()?;
         let r = syscall::mmap(0, size, prot, flags, self.fd, 0);
-        if r == u64::MAX
-        {
+        if r == u64::MAX {
             return Err("Mapping the file went wrong.");
         }
-        Ok(r as *mut u8)
+        Ok(core::slice::from_raw_parts_mut(r as *mut u8, size))
     }
 }
 impl Drop for File {

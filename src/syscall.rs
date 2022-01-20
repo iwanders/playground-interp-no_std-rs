@@ -72,7 +72,15 @@ unsafe fn syscall_3_arg(syscall_id: u32, arg0: u64, arg1: u64, arg2: u64) -> u64
     );
     ret
 }
-unsafe fn syscall_6_arg(syscall_id: u32, arg0: u64, arg1: u64, arg2: u64, arg3: u64, arg4: u64, arg5: u64) -> u64 {
+unsafe fn syscall_6_arg(
+    syscall_id: u32,
+    arg0: u64,
+    arg1: u64,
+    arg2: u64,
+    arg3: u64,
+    arg4: u64,
+    arg5: u64,
+) -> u64 {
     let ret: u64;
     asm!("syscall",
         in("rax") syscall_id,
@@ -202,10 +210,17 @@ pub const MAP_PRIVATE: i32 = 0x02;
 // Other flags
 pub const MAP_FIXED: i32 = 0x10;
 pub const MAP_ANONYMOUS: i32 = 0x20; // don't use as a file.
-pub unsafe fn mmap(addr: u64, length: usize, prot: i32, flags: i32, fd: u64, offset: usize) -> u64
-{
+pub unsafe fn mmap(addr: u64, length: usize, prot: i32, flags: i32, fd: u64, offset: usize) -> u64 {
     const SYSCALL_ID: u32 = 9;
-    syscall_6_arg(SYSCALL_ID, addr as u64, length as u64, prot as u64, flags as u64, fd, offset as u64)
+    syscall_6_arg(
+        SYSCALL_ID,
+        addr as u64,
+        length as u64,
+        prot as u64,
+        flags as u64,
+        fd,
+        offset as u64,
+    )
 }
 
 pub mod test {
@@ -228,7 +243,14 @@ pub mod test {
     pub fn test_mmap() {
         unsafe {
             // lets allocate a megabyte.
-            let z = mmap(0, 1024 * 1024, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
+            let z = mmap(
+                0,
+                1024 * 1024,
+                PROT_READ | PROT_WRITE,
+                MAP_PRIVATE | MAP_ANONYMOUS,
+                0,
+                0,
+            );
             println!("{:x}", z);
         }
     }

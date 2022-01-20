@@ -6,6 +6,17 @@ use crate::println;
 pub struct Chunk {
     p: *mut u8,
     amount: usize,
+    is_mmap: bool,
+}
+
+impl Default for Chunk {
+    fn default() -> Self {
+        Chunk {
+            p: 0 as *mut u8,
+            amount: 0,
+            is_mmap: false,
+        }
+    }
 }
 
 impl Chunk {
@@ -23,7 +34,13 @@ impl Chunk {
 impl Drop for Chunk {
     fn drop(&mut self) {
         // println!("Drop on {:?}", self.p);
-        unsafe { free(self.p) }
+        if self.p != 0 as *mut u8 {
+            if self.is_mmap {
+                unimplemented!();
+            } else {
+                unsafe { free(self.p) }
+            }
+        }
     }
 }
 
@@ -71,7 +88,20 @@ pub unsafe fn malloc(amount: usize) -> *mut u8 {
 /// scope.
 pub fn malloc_chunk(amount: usize) -> Chunk {
     let p = unsafe { malloc(amount) };
-    Chunk { p, amount }
+    Chunk {
+        p,
+        amount,
+        is_mmap: false,
+    }
+}
+
+pub fn mmap_chunk(amount: usize, prot: i32, flags: i32) -> Chunk {
+    let p = unsafe { crate::syscall::mmap(0, amount, prot, flags | crate::syscall::MAP_ANONYMOUS, 0, 0) as *mut u8 };
+    Chunk {
+        p,
+        amount,
+        is_mmap: true,
+    }
 }
 
 /// Struct to record some stats on the amount of memory allocated.
