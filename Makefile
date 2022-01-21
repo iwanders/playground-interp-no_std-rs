@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 
-RUST_BINARY=target/x86_64-unknown-linux-gnu/debug/syscall_test
+RUST_BINARY=target/x86_64-unknown-linux-gnu/debug/examples/dynamic_linker
 TEST_BINARY=/tmp/test_binary
 
 # Make the path for the new interp location the same length as the original ld-linux dynamic loader
@@ -10,6 +10,7 @@ NEW_INTERP_PATH=/tmp/new_interp_padding____
 OLD_INTERP=/lib64/ld-linux-x86-64.so.2
 
 
+# We must pass --target to ensure the -nostdlibs doesnt get passed to buildscripts.
 run:
 	cargo run -Z build-std=core --target x86_64-unknown-linux-gnu
 .PHONY: run
@@ -24,30 +25,34 @@ build:
 b: build
 .PHONY: b
 
-.PHONY: symbols
-symbols:
-	readelf -s $(RUST_BINARY)
-.PHONY: ldd
-
 
 clean:
 	rm $(RUST_BINARY)
 .PHONY: clean
 
 
-test_interp_ldd:
-	ldd $(TEST_BINARY)
-.PHONY: test_interp_ldd
 
-test_interp_interp:
-	objdump -s -j .interp $(TEST_BINARY)
-	readelf -x .interp $(TEST_BINARY)
-.PHONY: test_interp_interp
+run_bdl: test_binary_minimal
+	cargo run --example dynamic_linker -Z build-std=core --target x86_64-unknown-linux-gnu -- /tmp/minimal
+.PHONY: run_bdl
+rbdl: run_bdl
+.PHONY: rbdl
 
-test_interp_readelf_all:
-	readelf -a $(TEST_BINARY)
-.PHONY: test_interp_readelf_all
+build_dl:
+	cargo build --example dynamic_linker -Z build-std=core --target x86_64-unknown-linux-gnu
+.PHONY: build_dl
 
+bdl: build_dl
+.PHONY: bdl
+
+
+test_binary_minimal:
+	# -DUSE_LIB=1
+	g++ -g -fPIC -shared ./test_interp/minimal_lib.cpp -o /tmp/libminimal_lib.so
+	g++ -g -nostdlib -fPIC ./test_interp/minimal.cpp -L/tmp/ -l minimal_lib -o $(TEST_BINARY)
+.PHONY: test_binary_minimal
+
+# This binary is really complex... relying on printf and lots more...
 test_interp_build_binary:
 	g++ ./test_interp/main.cpp -o $(TEST_BINARY)
 	cp $(TEST_BINARY) /tmp/orig_test_binary
@@ -61,7 +66,7 @@ test_interp_swap_interp:
 	sed -i "s|$(OLD_INTERP)|$(NEW_INTERP_PATH)|" $(TEST_BINARY)
 .PHONY: test_interp_swap_interp
 
-test_interp: build test_interp_build_binary test_interp_swap_interp
+test_interp: build_dl test_binary_minimal test_interp_swap_interp
 	echo "Here goes!"
 	$(TEST_BINARY) arg0 arg1 arg2
 .PHONY: test_interp

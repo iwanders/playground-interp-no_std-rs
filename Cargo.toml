@@ -10,3 +10,11 @@ panic = "abort"
 [profile.release]
 panic = "abort"
 
+[[example]]
+name = "dynamic_linker"
+path = "examples/dynamic_linker.rs"
+
+# Dev dependencies for the dynamic linker example.
+[dev-dependencies]
+xmas-elf = "0.8.0"
+zero = "0.1.2"

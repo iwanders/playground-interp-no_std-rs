@@ -26,7 +26,10 @@ struct auxv_t {
 
 impl auxv_t {
     const AT_NULL: i32 = 0;
-    const AT_EXECFD: i32 = 3;
+    const AT_EXECFD: i32 = 2;
+    const AT_PHDR: i32 = 3;
+    const AT_PHENT: i32 = 4;
+    const AT_PHNUM: i32 = 5;
     const AT_ENTRY: i32 = 9;
     const AT_UID: i32 = 11;
     const AT_PLATFORM: i32 = 15;
@@ -43,6 +46,9 @@ impl core::fmt::Debug for auxv_t {
                 auxv_t::AT_EXECFD => {
                     w.field("AT_EXECFD", &format_args!("0x{:x}", &self.a_un.a_val))
                 }
+                auxv_t::AT_PHDR => w.field("AT_PHDR", &self.a_un.a_ptr),
+                auxv_t::AT_PHENT => w.field("AT_PHENT", &format_args!("0x{:x}", &self.a_un.a_val)),
+                auxv_t::AT_PHNUM => w.field("AT_PHNUM", &format_args!("0x{:x}", &self.a_un.a_val)),
                 auxv_t::AT_UID => w.field("AT_UID", &format_args!("0x{:x}", &self.a_un.a_val)),
                 auxv_t::AT_ENTRY => w.field("AT_ENTRY", &self.a_un.a_ptr),
                 auxv_t::AT_EXECFN => w.field(
@@ -122,10 +128,8 @@ impl AbiContext {
         v
     }
 
-
     /// Jump to the instruction address with rsp set.
-    pub fn jump(address: i64) -> !
-    {
+    pub fn jump(address: i64) -> ! {
         unsafe {
             let orig_rsp = ORIGINAL_RSP;
             core::arch::asm!("
@@ -133,14 +137,13 @@ impl AbiContext {
                 jmp {entry}", zz = in(reg) orig_rsp, entry = in(reg) address);
         }
         unreachable!();
-        
     }
 
     /// Dispatches to execfn, stored in at_entry.
     pub fn entry(&self) -> ! {
         unsafe {
             let index = self
-                .entry_index()
+                .get_auxv_index(auxv_t::AT_ENTRY)
                 .expect("Caller should check have_entry()");
             let addr: i64 = (*self.aux_ptr.offset(index)).a_un.a_val;
             AbiContext::jump(addr);
@@ -148,14 +151,13 @@ impl AbiContext {
         unreachable!();
     }
 
-
     /// Obtain the AT_ENTRY index.
-    fn entry_index(&self) -> Option<isize> {
+    fn get_auxv_index(&self, desired: i32) -> Option<isize> {
         unsafe {
             let mut v: isize = 0;
             loop {
                 let a_type = (*self.aux_ptr.offset(v)).a_type;
-                if a_type == auxv_t::AT_ENTRY {
+                if a_type == desired {
                     return Some(v);
                 } else if a_type == auxv_t::AT_NULL {
                     break;
@@ -166,10 +168,23 @@ impl AbiContext {
         None
     }
 
+    pub fn get_phdr(&self) -> Option<(*const u8, u64, u64)> {
+        let z = self.get_auxv_index(auxv_t::AT_PHDR)?;
+        let phdr;
+        let phent;
+        let phnum;
+        unsafe {
+            phdr = core::mem::transmute::<_, *const u8>(self.auxv(z).a_un.a_ptr);
+            phent = self.auxv(self.get_auxv_index(auxv_t::AT_PHENT)?).a_un.a_val;
+            phnum = self.auxv(self.get_auxv_index(auxv_t::AT_PHNUM)?).a_un.a_val;
+        }
+        Some((phdr, phent as u64, phnum as u64))
+    }
+
     /// Check if we are running as an interpreter.
     pub fn is_interpreter(&self) -> bool {
         unsafe {
-            if let Some(index) = self.entry_index() {
+            if let Some(index) = self.get_auxv_index(auxv_t::AT_ENTRY) {
                 // Check if the AT_ENTRY is not equal to _start
                 // if it isn't, we are acting as an interpreter.
                 let entry_record = (self.auxv(index as isize)).a_un.a_ptr;

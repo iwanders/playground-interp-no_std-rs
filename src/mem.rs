@@ -96,7 +96,10 @@ pub fn malloc_chunk(amount: usize) -> Chunk {
 }
 
 pub fn mmap_chunk(amount: usize, prot: i32, flags: i32) -> Chunk {
-    let p = unsafe { crate::syscall::mmap(0, amount, prot, flags | crate::syscall::MAP_ANONYMOUS, 0, 0) as *mut u8 };
+    let p = unsafe {
+        crate::syscall::mmap(0, amount, prot, flags | crate::syscall::MAP_ANONYMOUS, 0, 0)
+            as *mut u8
+    };
     Chunk {
         p,
         amount,
