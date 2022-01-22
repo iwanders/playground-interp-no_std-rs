@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![feature(naked_functions)]
 
 // Need to provide memcmp, memcpy and memset.
 // Setting breakpoints in these functions, or changing them into loop{}
@@ -23,8 +24,7 @@ use core::fmt;
 
 
 // The entry point to our binary.
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
+fn main() -> ! {
     // Create something writeable.
     let mut v: WritableThing = WritableThing{};
 
@@ -34,6 +34,29 @@ pub extern "C" fn _start() -> ! {
     // We'll never get here, but we go into this loop to check whether we got past the format with
     // gdb.
     loop {}
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn _start_stage2() {
+    // Rdi was stored from rsp in _start, so here we can really read it, and store it for
+    // posterity.
+
+    // Then, we can go into main itself.
+    main();
+}
+
+/// The entry point of our program, naked function to prevent the prologue, this function copies
+/// $rsp into rdx and then calls the stage 2 start function.
+#[no_mangle]
+#[naked] // disable prologue; https://github.com/nox/rust-rfcs/blob/master/text/1201-naked-fns.md
+pub unsafe extern "C" fn _start() {
+    core::arch::asm!(
+        // "mov rdi, rsp
+    "
+    // invoke main.
+    call _start_stage2",
+        options(noreturn)
+    ); // can't read rsp into original_rsp here, as it is zero, or just not used?
 }
 
 // Because we have no std we need to provide a panic handler.

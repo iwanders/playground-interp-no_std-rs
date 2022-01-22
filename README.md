@@ -1,3 +1,5 @@
+TL;DR, stack alignment matters. `_start` should ensure alignment is correct.
+
 ## Initial discovery
 
 > The `core` library _must_ be rebuilt, I'm not certain why, but if we don't and we format a 
@@ -275,4 +277,6 @@ For:
 So between 1.47 and 1.48... But swapping back to `panic!()` does make it pass again.
 
 Can't figure out how to get `asm!` working at this version to exit with another return code to make testing easy yet.
+---
 
+Ah, issue is due to the stack alignment being non-standard, causing the instructions that require alignment (when using optimisations) to fail.
