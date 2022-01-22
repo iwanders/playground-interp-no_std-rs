@@ -296,13 +296,18 @@ pub unsafe extern "C" fn _start_stage2() {
 
 /// The entry point of our program, naked function to prevent the prologue, this function copies
 /// $rsp into rdx and then calls the stage 2 start function.
+/// It also takes care of stack alignment. http://dbp-consulting.com/tutorials/debugging/linuxProgramStartup.html
 #[no_mangle]
 #[naked] // disable prologue; https://github.com/nox/rust-rfcs/blob/master/text/1201-naked-fns.md
 pub unsafe extern "C" fn _start() {
     core::arch::asm!(
-        "mov rdi, rsp
-    // invoke main.
-    call _start_stage2",
+        "xor ebp, ebp  // Sets ebp to zero, recommended by ABI.
+         xor rbp, rbp  // Lets do the same for the 64 bit register.
+         mov rdi, rsp // Store the original rsp.
+         // Then, we can just enforce stack alignment.
+         and rsp, 0xFFFFFFFFfffffff0 // enforce stack alignment on 16 bytes.
+        // invoke the second stage start method with the aligned stack.
+        call _start_stage2",
         options(noreturn)
-    ); // can't read rsp into original_rsp here, as it is zero, or just not used?
+    ); // can't read rsp into original_rsp here, may not be allowed in naked functions?
 }

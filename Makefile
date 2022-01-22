@@ -12,14 +12,14 @@ OLD_INTERP=/lib64/ld-linux-x86-64.so.2
 
 # We must pass --target to ensure the -nostdlibs doesnt get passed to buildscripts.
 run:
-	cargo run -Z build-std=core --target x86_64-unknown-linux-gnu
+	cargo run --target x86_64-unknown-linux-gnu
 .PHONY: run
 r: run
 .PHONY: r
 
 
 build:
-	cargo build -Z build-std=core --target x86_64-unknown-linux-gnu
+	cargo build --target x86_64-unknown-linux-gnu
 .PHONY: build
 
 b: build

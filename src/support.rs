@@ -39,6 +39,18 @@ pub unsafe extern "C" fn memcmp(s1: *const u8, s2: *const u8, size: usize) -> i3
     0
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn bcmp(s1: *const u8, s2: *const u8, size: usize) -> i32 {
+    let mut i = 0;
+    while i < size {
+        if *s1.offset(i as isize) != *s2.offset(i as isize) {
+            return 1;
+        }
+        i += 1;
+    }
+    0
+}
+
 /// Determine the length of a string by iterating from the pointer until a null byte is found.
 pub unsafe fn strlen(s1: *const u8, limit: usize) -> usize {
     let mut l: isize = 0;
