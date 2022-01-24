@@ -33,13 +33,13 @@ clean:
 
 
 run_bdl: test_binary_minimal
-	cargo run --example dynamic_linker -Z build-std=core --target x86_64-unknown-linux-gnu -- /tmp/minimal
+	cargo run --example dynamic_linker --target x86_64-unknown-linux-gnu -- /tmp/minimal
 .PHONY: run_bdl
 rbdl: run_bdl
 .PHONY: rbdl
 
 build_dl:
-	cargo build --example dynamic_linker -Z build-std=core --target x86_64-unknown-linux-gnu
+	cargo build --example dynamic_linker --target x86_64-unknown-linux-gnu
 .PHONY: build_dl
 
 bdl: build_dl
