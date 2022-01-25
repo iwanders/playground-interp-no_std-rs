@@ -148,7 +148,6 @@ impl AbiContext {
             let addr: i64 = (*self.aux_ptr.offset(index)).a_un.a_val;
             AbiContext::jump(addr);
         }
-        unreachable!();
     }
 
     /// Obtain the AT_ENTRY index.
