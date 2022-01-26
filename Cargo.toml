@@ -4,9 +4,6 @@ version = "0.0.0"
 authors = ["Ivor Wanders <ivor@iwanders.net>"]
 license = "MIT OR Apache-2.0"
 
-[build]
-target="x86_64-unknown-linux-gnu"
-
 # Disables error handling, prevents eh_personality requirement.
 [profile.dev]
 panic = "abort"
