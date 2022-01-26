@@ -3,9 +3,16 @@
 version = 3
 
 [[package]]
+name = "compiler_builtins"
+version = "0.1.66"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "191424db7756bbed2c4996959a0fbda94388abcf4f5a2728a8af17481ad9c4f7"
+
+[[package]]
 name = "syscall_test"
 version = "0.0.0"
 dependencies = [
+ "compiler_builtins",
  "xmas-elf",
  "zero",
 ]

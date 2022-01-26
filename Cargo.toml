@@ -10,6 +10,9 @@ panic = "abort"
 [profile.release]
 panic = "abort"
 
+[dependencies]
+compiler_builtins = {version="0.1.66", features = ["mem"]}
+
 [[example]]
 name = "dynamic_linker"
 path = "examples/dynamic_linker.rs"
