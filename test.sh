@@ -7,7 +7,7 @@ echo ${CARGO_UNSTABLE_TARGET_APPLIES_TO_HOST}
 echo ${CARGO_TARGET_APPLIES_TO_HOST}
 
 rm -rf target
-cargo +nightly build --target x86_64-unknown-linux-gnu
+cargo build --target x86_64-unknown-linux-gnu
 objdump -T ./target/debug/build/compiler_builtins-1d5a76e82d9e8bdd/build-script-build  | grep main
 cargo b -Zunstable-options --build-plan  --target x86_64-unknown-linux-gnu > /tmp/build_plan_with_target.json
 
