@@ -4,33 +4,14 @@
 #![no_main]
 // here we go :o
 
-extern crate syscall_test;
-
-use syscall_test::io::*;
-use syscall_test::{context, println, syscall::exit};
-
-#[no_mangle]
-pub fn main() -> ! {
-    let context = context();
-    context.dump();
-
-    if context.is_interpreter() {
-        println!("We are an interpreter, dispatching to main application entry.");
-        context.entry();
-    }
-
-    // when this is called without checking is_interpreter, we endlessly ged the debug prints, so
-    // that implies we're setting up rsp correctly again.
-    // context.entry();
-    syscall_test::test_all();
-    // Lets exit gracefully.
-    exit(0);
+pub fn _start()
+{
+    loop{}
 }
 
 use core::panic::PanicInfo;
 /// Handler for panic events, prints and exists using the syscall.
 #[panic_handler]
-pub fn panic(info: &PanicInfo) -> ! {
-    println!("{}", info);
-    exit(99);
+pub fn panic(_info: &PanicInfo) -> ! {
+    loop {}
 }

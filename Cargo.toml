@@ -4,6 +4,9 @@ version = "0.0.0"
 authors = ["Ivor Wanders <ivor@iwanders.net>"]
 license = "MIT OR Apache-2.0"
 
+[build]
+target="x86_64-unknown-linux-gnu"
+
 # Disables error handling, prevents eh_personality requirement.
 [profile.dev]
 panic = "abort"
@@ -12,12 +15,3 @@ panic = "abort"
 
 [dependencies]
 compiler_builtins = {version="0.1.66", features = ["mem"]}
-
-[[example]]
-name = "dynamic_linker"
-path = "examples/dynamic_linker.rs"
-
-# Dev dependencies for the dynamic linker example.
-[dev-dependencies]
-xmas-elf = "0.8.0"
-zero = "0.1.2"

@@ -2,8 +2,6 @@
 set -v
 
 
-cargo +nightly --version
-
 echo ${__CARGO_TEST_CHANNEL_OVERRIDE_DO_NOT_USE_THIS}
 echo ${CARGO_UNSTABLE_TARGET_APPLIES_TO_HOST}
 echo ${CARGO_TARGET_APPLIES_TO_HOST}
@@ -22,7 +20,8 @@ export CARGO_TARGET_APPLIES_TO_HOST="false"
 echo ${__CARGO_TEST_CHANNEL_OVERRIDE_DO_NOT_USE_THIS}
 echo ${CARGO_UNSTABLE_TARGET_APPLIES_TO_HOST}
 echo ${CARGO_TARGET_APPLIES_TO_HOST}
-cargo --version
+
+
 echo "--"
 cargo build
 echo "--"
