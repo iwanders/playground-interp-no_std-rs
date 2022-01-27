@@ -1,4 +1,4 @@
-# Playground intrp no_std
+# Playground interp no_std
 
 Odd but descriptive repo name. This repo isn't intended to _really_ do anything, it is just me
 playing around trying to make a completely stand-alone binary in Rust. Without relying on libc, the

@@ -26,45 +26,50 @@ mod dynamic_linker {
         let (phdr, phent, phnum) = context.get_phdr().ok_or("No phdr?")?;
 
         // Before the program header is the first header part...
-        let file;
-        unsafe {
-            let z = phdr.offset(-(core::mem::size_of::<xmas_elf::header::HeaderPt1>() as isize) - 48);
-            let full_file = core::slice::from_raw_parts(
-                z,
-                core::mem::size_of::<xmas_elf::header::HeaderPt1>() + (phent * phnum) as usize + 10000,
-            );
-            // println!("{:x?}", full_file);
-            file = xmas_elf::ElfFile::new(full_file).expect("SHould pass");
-        }
+        // Try an ugly hack here as a temporary workaround to obtain an ElfFile object;
+        let elf_file_start = unsafe {
+            phdr.offset(-(core::mem::size_of::<xmas_elf::header::HeaderPt1>() as isize) - 48)
+        };
+
+        let get_chunk = |pos: u64, length: u64| -> &[u8] {
+            unsafe {
+                core::slice::from_raw_parts(
+                    (elf_file_start.offset(pos as isize)) as *const u8,
+                    length as usize,
+                )
+            }
+        };
 
         for i in 0u64..phnum {
             let sl;
-            let part_start = unsafe{phdr.offset((phent * i) as isize)};
+            let part_start = unsafe { phdr.offset((phent * i) as isize) };
             unsafe {
-                sl = core::slice::from_raw_parts(
-                    part_start,
-                    (phent * 1) as usize,
-                );
+                sl = core::slice::from_raw_parts(part_start, (phent * 1) as usize);
             }
             let phdr_parsed = xmas_elf::program::ProgramHeader::Ph64(read(sl));
             println!("{:?}", phdr_parsed);
 
             // The dynamic data is the interesting part.
-            if let Ok(v) = phdr_parsed.get_type()
-            {
-                if v == xmas_elf::program::Type::Dynamic
-                {
-                    let zzzz = phdr_parsed.get_data(&file);
-                    
-                    let data_sl;
-                    unsafe {
-                        data_sl = core::slice::from_raw_parts(
-                            phdr.offset(phdr_parsed.offset() as isize),
-                            (phdr_parsed.mem_size()) as usize,
-                        );
+            if let Ok(v) = phdr_parsed.get_type() {
+                if v == xmas_elf::program::Type::Dynamic {
+                    // Then, parse the segment data.
+                    let segment_data_parsed = xmas_elf::program::SegmentData::Dynamic64(
+                        read_array(get_chunk(phdr_parsed.offset(), phdr_parsed.mem_size())),
+                    );
+                    // And do something if the segment data is dynamic64.
+                    if let xmas_elf::program::SegmentData::Dynamic64(segments) = segment_data_parsed
+                    {
+                        println!("segment: {:?}", segments);
+                        for segment in segments {
+                            println!("Entry : {:?}", segment);
+                            match segment.get_tag().expect("Will succeed") {
+                                xmas_elf::dynamic::Tag::SymTab => {
+                                    println!("SymTab ptr : {:?}", segment.get_ptr());
+                                },
+                                _ => {},
+                            }
+                        }
                     }
-                    // let data = xmas_elf::sections::SectionData::Dynamic64(read_array(data_sl));
-                    println!("{:?}", zzzz);
                 }
             }
         }
