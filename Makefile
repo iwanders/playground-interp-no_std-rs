@@ -48,8 +48,8 @@ bdl: build_dl
 
 test_binary_minimal:
 	# -DUSE_LIB=1
-	g++ -g -fPIC -shared ./test_interp/minimal_lib.cpp -o /tmp/libminimal_lib.so
-	g++ -g -nostdlib -fPIC ./test_interp/minimal.cpp -L/tmp/ -l minimal_lib -o $(TEST_BINARY)
+	g++ -g -fPIC -shared -DUSE_LIB=1 ./test_interp/minimal_lib.cpp -o /tmp/libminimal_lib.so
+	g++ -g -nostdlib -fPIC -DUSE_LIB=1 ./test_interp/minimal.cpp -L/tmp/ -l minimal_lib -o $(TEST_BINARY)
 .PHONY: test_binary_minimal
 
 # This binary is really complex... relying on printf and lots more...

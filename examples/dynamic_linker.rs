@@ -25,20 +25,8 @@ mod dynamic_linker {
         // AT_PHDR, with AT_PHENT and AT_PHNUM may be set to specify the program headers.
         let (phdr, phent, phnum) = context.get_phdr().ok_or("No phdr?")?;
 
-        // Before the program header is the first header part...
-        // Try an ugly hack here as a temporary workaround to obtain an ElfFile object;
-        let elf_file_start = unsafe {
-            phdr.offset(-(core::mem::size_of::<xmas_elf::header::HeaderPt1>() as isize) - 48)
-        };
-
-        let get_chunk = |pos: u64, length: u64| -> &[u8] {
-            unsafe {
-                core::slice::from_raw_parts(
-                    (elf_file_start.offset(pos as isize)) as *const u8,
-                    length as usize,
-                )
-            }
-        };
+        // Make a variable we'll point at the start of the elf file.
+        let mut elf_file_start: Option<*const u8> = None;
 
         for i in 0u64..phnum {
             let sl;
@@ -51,7 +39,25 @@ mod dynamic_linker {
 
             // The dynamic data is the interesting part.
             if let Ok(v) = phdr_parsed.get_type() {
+                // Program header itself contains the offset in the elf file, so we can
+                // subtract the offset from the current address to find the start of the
+                // ELF file itself.
+                if v == xmas_elf::program::Type::Phdr {
+                    elf_file_start = Some(unsafe{part_start.offset(-(phdr_parsed.offset() as isize))});
+                    println!("elf_file_start: {:?}", elf_file_start);
+                }
+                // Phdr is the first entry, so we can just use elf_file_start from here on.
                 if v == xmas_elf::program::Type::Dynamic {
+
+                    let get_chunk = |pos: u64, length: u64| -> &[u8] {
+                        unsafe {
+                            core::slice::from_raw_parts(
+                                (elf_file_start.as_ref().expect("should have elf_file start").offset(pos as isize)) as *const u8,
+                                length as usize,
+                            )
+                        }
+                    };
+                    let elf_file_start = elf_file_start.as_ref().expect("Should have elf file start.");
                     // Then, parse the segment data.
                     let segment_data_parsed = xmas_elf::program::SegmentData::Dynamic64(
                         read_array(get_chunk(phdr_parsed.offset(), phdr_parsed.mem_size())),
@@ -63,8 +69,11 @@ mod dynamic_linker {
                         for segment in segments {
                             println!("Entry : {:?}", segment);
                             match segment.get_tag().expect("Will succeed") {
-                                xmas_elf::dynamic::Tag::SymTab => {
-                                    println!("SymTab ptr : {:?}", segment.get_ptr());
+                                xmas_elf::dynamic::Tag::Pltgot => {
+                                    println!("Pltgot ptr : {:?}", segment.get_ptr());
+                                },
+                                xmas_elf::dynamic::Tag::PltRelSize => {
+                                    println!("PltRelSize : {:?}", segment.get_val());
                                 },
                                 _ => {},
                             }
